@@ -1,41 +1,47 @@
-let chart;
-
-function updateChart() {
-    fetch('/prices')
-        .then(response => response.json())
+document.addEventListener('DOMContentLoaded', function() {
+    fetch('/data')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
         .then(data => {
-            const labels = data.map(item => new Date(item.timestamp).toLocaleTimeString());
-            const prices = data.map(item => item.price);
+            console.log('Data:', data);
 
-            if (chart) {
-                chart.data.labels = labels;
-                chart.data.datasets[0].data = prices;
-                chart.update();
-            } else {
-                const ctx = document.getElementById('bitcoinChart').getContext('2d');
-                chart = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            label: '비트코인 가격 (USDT)',
-                            data: prices,
-                            borderColor: 'rgb(75, 192, 192)',
-                            tension: 0.1
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        scales: {
-                            x: {
-                                reverse: true
+            const labels = data.map(row => row['time']);
+            const priceValues = data.map(row => row['price']);
+
+            const ctx = document.getElementById('myChart').getContext('2d');
+            const myChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Price',
+                        data: priceValues,
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1,
+                        fill: false
+                    }]
+                },
+                options: {
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Time'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Price'
                             }
                         }
                     }
-                });
-            }
-        });
-}
-
-updateChart();
-setInterval(updateChart, 5000);
+                }
+            });
+        })
+        .catch(error => console.error('Error fetching data:', error));
+});

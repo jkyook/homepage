@@ -1,29 +1,30 @@
-from flask import Flask, render_template, jsonify
-from apscheduler.schedulers.background import BackgroundScheduler
-import ccxt
-from database import init_db, add_price, get_prices
+from flask import Flask, jsonify, render_template
+import pandas as pd
+import os
 
 app = Flask(__name__)
-
-def fetch_bitcoin_price():
-    exchange = ccxt.binance()
-    ticker = exchange.fetch_ticker('BTC/USDT')
-    price = ticker['last']
-    add_price(price)
-
-scheduler = BackgroundScheduler()
-# scheduler.add_job(func=fetch_bitcoin_price, trigger="interval", seconds=1)
-scheduler.add_job(func=fetch_bitcoin_price, trigger="interval", seconds=5, max_instances=1)
-scheduler.start()
 
 @app.route('/')
 def index():
     return render_template('index.html')
 
-@app.route('/prices')
-def prices():
-    return jsonify(get_prices())
+@app.route('/data')
+def data():
+    # app.py와 동일한 디렉토리에 있는 CSV 파일 경로
+    file_path = os.path.join(os.path.dirname(__file__), '(e)df_npp_m_08-05-14-35.csv')
+    try:
+        # CSV 파일 읽기
+        df = pd.read_csv(file_path)
+
+        # 'time' 컬럼을 시간 형식으로 변환하고, 'price'로 사용할 'now_prc' 컬럼 선택
+        df['time'] = pd.to_datetime(df['time'], format='%H%M%S').dt.strftime('%H:%M:%S')
+        df = df[['time', 'now_prc']]  # 'now_prc'가 'price'를 대체합니다.
+
+        # 데이터를 JSON 형식으로 변환
+        data = df.rename(columns={'now_prc': 'price'}).to_dict(orient='records')
+        return jsonify(data)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    init_db()
     app.run(debug=True)

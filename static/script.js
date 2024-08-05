@@ -1,6 +1,18 @@
 
 document.addEventListener('DOMContentLoaded', function() {
-    fetch('/data')
+    document.getElementById('fileForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        const fileId = document.getElementById('file_id').value;
+
+        fetch('/data', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: new URLSearchParams({
+                'file_id': fileId
+            })
+        })
         .then(response => {
             if (!response.ok) {
                 throw new Error('Network response was not ok');
@@ -45,4 +57,5 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         })
         .catch(error => console.error('Error fetching data:', error));
+    });
 });

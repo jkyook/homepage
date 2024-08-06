@@ -1,5 +1,16 @@
-
 document.addEventListener('DOMContentLoaded', function() {
+    fetch('/files')
+        .then(response => response.json())
+        .then(data => {
+            const dropdown = document.getElementById('file_id');
+            data.forEach(file => {
+                const option = document.createElement('option');
+                option.value = file.id;
+                option.textContent = file.date;
+                dropdown.appendChild(option);
+            });
+        });
+
     document.getElementById('fileForm').addEventListener('submit', function(event) {
         event.preventDefault();
         const fileId = document.getElementById('file_id').value;
@@ -20,13 +31,24 @@ document.addEventListener('DOMContentLoaded', function() {
             return response.json();
         })
         .then(data => {
-            console.log('Data:', data);
+            console.log('Data received from backend:', data);
+
+            if (data.error) {
+                console.error('Error:', data.error);
+                return;
+            }
 
             const labels = data.map(row => row['time']);
             const priceValues = data.map(row => row['price']);
 
             const ctx = document.getElementById('myChart').getContext('2d');
-            const myChart = new Chart(ctx, {
+
+            // Check if `window.myChart` is an instance of `Chart`
+            if (window.myChart && window.myChart instanceof Chart) {
+                window.myChart.destroy();
+            }
+
+            window.myChart = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: labels,

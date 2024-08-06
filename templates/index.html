@@ -1,20 +1,22 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CSV Data Visualization</title>
+    <title>Google Drive File List</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="{{ url_for('static', filename='script.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
 </head>
 <body>
-    <h1>Price Data Visualization</h1>
+    <h1>Google Drive File List</h1>
     <form id="fileForm">
-        <label for="file_id">Google Drive File ID:</label>
-        <input type="text" id="file_id" name="file_id">
-        <input type="submit" value="Get Data">
+        <label for="file_id">Select a date:</label>
+        <select id="file_id">
+            <option value="">--Select a date--</option>
+        </select>
+        <button type="submit">Plot Graph</button>
     </form>
+    <br>
     <canvas id="myChart" width="400" height="200"></canvas>
 </body>
 </html>

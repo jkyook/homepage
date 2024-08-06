@@ -67,7 +67,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     labels: labels,
                     datasets: [
                         {
-                            label: 'Bitcoin Price',
+                            label: 'price',
                             data: priceValues,
                             borderColor: '#4e73df',
                             backgroundColor: 'rgba(78, 115, 223, 0.2)',
@@ -77,7 +77,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             yAxisID: 'y1'
                         },
                         {
-                            label: 'NP1',
+                            label: 'long',
                             data: np1Values,
                             borderColor: '#e74a3b',
                             backgroundColor: 'rgba(231, 74, 59, 0.2)',
@@ -87,7 +87,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             yAxisID: 'y2'
                         },
                         {
-                            label: 'NP2',
+                            label: 'short',
                             data: np2Values,
                             borderColor: '#1cc88a',
                             backgroundColor: 'rgba(28, 200, 138, 0.2)',
@@ -97,7 +97,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             yAxisID: 'y2'
                         },
                         {
-                            label: 'PRF',
+                            label: 'profit',
                             data: prfValues,
                             borderColor: '#858796',
                             backgroundColor: 'rgba(133, 135, 150, 0.2)',
@@ -130,7 +130,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             position: 'left',
                             title: {
                                 display: true,
-                                text: 'Bitcoin Price',
+                                text: 'price',
                                 color: '#4e73df',
                                 font: {
                                     size: 14
@@ -151,7 +151,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             position: 'right',
                             title: {
                                 display: true,
-                                text: 'NP1, NP2, and PRF',
+                                text: 'long, short, and profit',
                                 color: '#e74a3b',
                                 font: {
                                     size: 14

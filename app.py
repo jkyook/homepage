@@ -34,7 +34,7 @@ def get_drive_service():
 @app.route('/files', methods=['GET'])
 def list_files():
     service = get_drive_service()
-    results = service.files().list(pageSize=50, fields="nextPageToken, files(id, name)").execute()
+    results = service.files().list(pageSize=200, fields="nextPageToken, files(id, name)").execute()
     items = results.get('files', [])
 
     filtered_files = []
@@ -54,14 +54,18 @@ def list_files():
             try:
                 # 날짜 문자열을 파싱하여 원하는 형식으로 변환
                 date_obj = datetime.strptime(date_str, '%m-%d')
-                formatted_date = date_obj.strftime('%m-%d')
+
+                # Check if 'npp_m' is in the file name
+                if '_m' in item['name']:
+                    formatted_date = 'B ' + date_obj.strftime('%m-%d')
+                else:
+                    formatted_date = 'K ' + date_obj.strftime('%m-%d')
             except ValueError:
                 formatted_date = 'Unknown'
 
             filtered_files.append({'id': item['id'], 'name': item['name'], 'date': formatted_date})
 
     return jsonify(filtered_files)
-
 
 @app.route('/data', methods=['POST'])
 def data():
@@ -87,11 +91,10 @@ def data():
 
         # 원하는 형식으로 변환
         df['time'] = df['time'].dt.strftime('%H:%M:%S')
-        df = df[['time', 'now_prc', 'np1', 'np2']]
+        df = df[['time', 'now_prc', 'np1', 'np2', 'prf']]  # prf 열 추가
 
         # 데이터를 JSON 형식으로 변환
         data = df.rename(columns={'now_prc': 'price'}).to_dict(orient='records')
-        # print(f"Data sent to frontend: {data}")  # Debugging line
         return jsonify(data)
 
     except Exception as e:

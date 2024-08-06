@@ -6,6 +6,8 @@ from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import InstalledAppFlow
 import pandas as pd
 import io
+import re
+from datetime import datetime
 
 app = Flask(__name__)
 
@@ -37,9 +39,26 @@ def list_files():
 
     filtered_files = []
     for item in items:
-        if item['name'].startswith('(e)df_npp_m'):
-            date_part = item['name'].split('_')[3]
-            filtered_files.append({'id': item['id'], 'name': item['name'], 'date': date_part})
+        if item['name'].startswith('(e)df_npp'):
+            print(f"Processing file: {item['name']}")  # Debugging line
+
+            # 정규 표현식: _MM-DD-HH-MM 형식에 해당
+            match = re.search(r'_(\d{2}-\d{2})-\d{2}-\d{2}', item['name'])
+            if match:
+                date_str = match.group(1)
+            else:
+                date_str = 'Unknown'
+
+            print(f"Extracted date_str: {date_str}")  # Debugging line
+
+            try:
+                # 날짜 문자열을 파싱하여 원하는 형식으로 변환
+                date_obj = datetime.strptime(date_str, '%m-%d')
+                formatted_date = date_obj.strftime('%m-%d')
+            except ValueError:
+                formatted_date = 'Unknown'
+
+            filtered_files.append({'id': item['id'], 'name': item['name'], 'date': formatted_date})
 
     return jsonify(filtered_files)
 
@@ -72,7 +91,7 @@ def data():
 
         # 데이터를 JSON 형식으로 변환
         data = df.rename(columns={'now_prc': 'price'}).to_dict(orient='records')
-        print(f"Data sent to frontend: {data}")  # Debugging line
+        # print(f"Data sent to frontend: {data}")  # Debugging line
         return jsonify(data)
 
     except Exception as e:

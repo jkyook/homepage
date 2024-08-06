@@ -42,9 +42,13 @@ document.addEventListener('DOMContentLoaded', function() {
             const priceValues = data.map(row => row['price']);
 
             const ctx = document.getElementById('myChart').getContext('2d');
+            if (ctx === null) {
+                console.error('Canvas context is null. Ensure the canvas element with id "myChart" exists.');
+                return;
+            }
 
-            // Check if `window.myChart` is an instance of `Chart`
-            if (window.myChart && window.myChart instanceof Chart) {
+            // Ensure `window.myChart` is a valid Chart instance before calling destroy
+            if (window.myChart instanceof Chart) {
                 window.myChart.destroy();
             }
 

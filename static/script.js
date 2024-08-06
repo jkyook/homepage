@@ -40,15 +40,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const labels = data.map(row => row['time']);
             const priceValues = data.map(row => row['price']);
+            const np1Values = data.map(row => row['np1']);
+            const np2Values = data.map(row => row['np2']);
 
             const ctx = document.getElementById('myChart').getContext('2d');
-            if (ctx === null) {
-                console.error('Canvas context is null. Ensure the canvas element with id "myChart" exists.');
-                return;
-            }
 
             // Ensure `window.myChart` is a valid Chart instance before calling destroy
-            if (window.myChart instanceof Chart) {
+            if (window.myChart && window.myChart instanceof Chart) {
                 window.myChart.destroy();
             }
 
@@ -56,13 +54,32 @@ document.addEventListener('DOMContentLoaded', function() {
                 type: 'line',
                 data: {
                     labels: labels,
-                    datasets: [{
-                        label: 'Price',
-                        data: priceValues,
-                        borderColor: 'rgba(75, 192, 192, 1)',
-                        borderWidth: 1,
-                        fill: false
-                    }]
+                    datasets: [
+                        {
+                            label: 'Bitcoin Price',
+                            data: priceValues,
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderWidth: 1,
+                            fill: false,
+                            yAxisID: 'y1'
+                        },
+                        {
+                            label: 'NP1',
+                            data: np1Values,
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            borderWidth: 1,
+                            fill: false,
+                            yAxisID: 'y2'
+                        },
+                        {
+                            label: 'NP2',
+                            data: np2Values,
+                            borderColor: 'rgba(153, 102, 255, 1)',
+                            borderWidth: 1,
+                            fill: false,
+                            yAxisID: 'y2'
+                        }
+                    ]
                 },
                 options: {
                     scales: {
@@ -72,10 +89,29 @@ document.addEventListener('DOMContentLoaded', function() {
                                 text: 'Time'
                             }
                         },
-                        y: {
+                        y1: {
+                            type: 'linear',
+                            position: 'left',
                             title: {
                                 display: true,
-                                text: 'Price'
+                                text: 'Bitcoin Price'
+                            },
+                            ticks: {
+                                beginAtZero: true
+                            }
+                        },
+                        y2: {
+                            type: 'linear',
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: 'NP1 and NP2'
+                            },
+                            ticks: {
+                                beginAtZero: true
+                            },
+                            grid: {
+                                drawOnChartArea: false // Grid lines only on y1 axis
                             }
                         }
                     }

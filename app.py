@@ -11,6 +11,7 @@ app = Flask(__name__)
 
 SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
 
+
 def get_drive_service():
     creds = None
     if os.path.exists('token.pickle'):
@@ -27,6 +28,7 @@ def get_drive_service():
     service = build('drive', 'v3', credentials=creds)
     return service
 
+
 @app.route('/files', methods=['GET'])
 def list_files():
     service = get_drive_service()
@@ -41,6 +43,7 @@ def list_files():
 
     return jsonify(filtered_files)
 
+
 @app.route('/data', methods=['POST'])
 def data():
     file_id = request.form['file_id']
@@ -52,13 +55,20 @@ def data():
         df = pd.read_csv(io.BytesIO(file))
 
         # 'time' 컬럼의 형식 확인 및 변환
-        df['time'] = pd.to_datetime(df['time'], format='%H%M', errors='coerce')
+        def convert_to_time_format(time_str):
+            # 'HHMMSS' 형식으로 되어 있는 문자열을 'HH:MM:SS' 형식으로 변환
+            time_str = str(time_str).zfill(6)  # 6자리로 맞추기
+            return f"{time_str[:2]}:{time_str[2:4]}:{time_str[4:]}"
+
+        df['time'] = df['time'].apply(convert_to_time_format)
+        df['time'] = pd.to_datetime(df['time'], format='%H:%M:%S', errors='coerce')
 
         # 변환이 실패한 데이터는 NaT (Not a Time)로 변환됨
         df = df.dropna(subset=['time'])
 
-        df['time'] = df['time'].dt.strftime('%H:%M:%S')  # 원하는 형식으로 변환
-        df = df[['time', 'now_prc']]
+        # 원하는 형식으로 변환
+        df['time'] = df['time'].dt.strftime('%H:%M:%S')
+        df = df[['time', 'now_prc', 'np1', 'np2']]
 
         # 데이터를 JSON 형식으로 변환
         data = df.rename(columns={'now_prc': 'price'}).to_dict(orient='records')
@@ -69,9 +79,11 @@ def data():
         app.logger.error(f"Error processing data: {e}")
         return jsonify({'error': str(e)}), 500
 
+
 @app.route('/')
 def index():
     return render_template('index.html')
+
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -6,6 +6,27 @@
     <title>51 strategy</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <style>
+        /* 스타일 시트 내부 */
+        body {
+            font-family: Arial, sans-serif; /* 기본 폰트 설정 */
+            margin: 0;
+            padding: 0;
+        }
+        h1 {
+            text-align: center; /* 제목 가운데 정렬 */
+            margin: 20px 0; /* 상하 여백 */
+        }
+        form {
+            text-align: center; /* 폼을 가운데 정렬 */
+        }
+        canvas {
+            display: block; /* canvas를 블록 요소로 변환하여 가운데 정렬 */
+            margin: 0 auto; /* canvas를 수평으로 가운데 정렬 */
+            max-width: 100%; /* 캔버스가 화면 크기에 맞게 조정됨 */
+            height: auto; /* 높이를 자동으로 조정 */
+        }
+    </style>
 </head>
 <body>
     <h1>51 strategy</h1>

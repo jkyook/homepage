@@ -79,38 +79,38 @@ document.addEventListener('DOMContentLoaded', function() {
                         {
                             label: 'long',
                             data: np1Values,
-                            borderColor: '#e74a3b',
-                            backgroundColor: 'rgba(231, 74, 59, 0.2)',
-                            borderWidth: 2,  // 줄인 선 두께
-                            pointRadius: 0.5,  // 점 크기 줄이기
+                            borderColor: '#28a745',  // 밝은 녹색으로 변경
+                            backgroundColor: 'rgba(40, 167, 69, 0.2)',  // 밝은 녹색의 반투명 배경
+                            borderWidth: 1,
+                            pointRadius: 0.2,
                             fill: true,
                             yAxisID: 'y2'
                         },
                         {
                             label: 'short',
                             data: np2Values,
-                            borderColor: '#1cc88a',
-                            backgroundColor: 'rgba(28, 200, 138, 0.2)',
-                            borderWidth: 2,  // 줄인 선 두께
-                            pointRadius: 0.5,  // 점 크기 줄이기
+                            borderColor: '#b73d3d',  // 어두운 붉은색
+                            backgroundColor: 'rgba(183, 61, 61, 0.2)',  // 어두운 붉은색의 반투명 배경
+                            borderWidth: 1,
+                            pointRadius: 0.2,
                             fill: true,
                             yAxisID: 'y2'
                         },
                         {
                             label: 'profit',
                             data: prfValues,
-                            borderColor: '#858796',
-                            backgroundColor: 'rgba(133, 135, 150, 0.2)',
-                            borderWidth: 2,
-                            pointRadius: 1,
+                            borderColor: '#f00',  // 빨간색으로 변경
+                            backgroundColor: 'rgba(255, 0, 0, 0.2)',  // 빨간색의 반투명 배경
+                            borderWidth: 3,
+                            pointRadius: 0.7,
                             fill: false,
                             yAxisID: 'y2'
                         }
                     ]
                 },
                 options: {
-                    responsive: true,  // 차트가 화면 크기에 맞게 조정됨
-                    maintainAspectRatio: true,  // 차트의 종횡비 유지
+                    responsive: true,
+                    maintainAspectRatio: true,
                     scales: {
                         x: {
                             title: {

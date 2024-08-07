@@ -7,24 +7,30 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
     <style>
-        /* 스타일 시트 내부 */
         body {
-            font-family: Arial, sans-serif; /* 기본 폰트 설정 */
+            font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
         }
         h1 {
-            text-align: center; /* 제목 가운데 정렬 */
-            margin: 20px 0; /* 상하 여백 */
+            text-align: center;
+            margin: 20px 0;
         }
         form {
-            text-align: center; /* 폼을 가운데 정렬 */
+            text-align: center;
         }
         canvas {
-            display: block; /* canvas를 블록 요소로 변환하여 가운데 정렬 */
-            margin: 0 auto; /* canvas를 수평으로 가운데 정렬 */
-            max-width: 100%; /* 캔버스가 화면 크기에 맞게 조정됨 */
-            height: auto; /* 높이를 자동으로 조정 */
+            display: block;
+            margin: 0 auto;
+            max-width: 100%;
+            height: auto;
+        }
+        #loading {
+            display: none; /* 기본적으로 숨김 */
+            text-align: center;
+            font-size: 18px;
+            color: #007bff;
+            margin: 20px 0;
         }
     </style>
 </head>
@@ -38,6 +44,7 @@
         <button type="submit">Plot Graph</button>
     </form>
     <br>
+    <div id="loading">Loading...</div> <!-- 로딩 메시지 추가 -->
     <canvas id="myChart" width="1200" height="600"></canvas>
 </body>
 </html>

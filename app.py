@@ -1,17 +1,17 @@
 from flask import Flask, render_template, jsonify, request, redirect, url_for, session
+import bcrypt
+import os
 from googleapiclient.discovery import build
 import pickle
-import os.path
 from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import InstalledAppFlow
 import pandas as pd
 import io
 import re
 from datetime import datetime, timedelta
-import os
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key'  # 세션을 안전하게 유지하기 위한 비밀키
+app.secret_key = os.environ.get('SECRET_KEY', 'your_secret_key')  # 환경 변수에서 비밀키 가져오기
 
 # 세션과 쿠키 타임아웃 설정
 app.permanent_session_lifetime = timedelta(minutes=30)  # 세션 타임아웃
@@ -45,11 +45,17 @@ def check_credentials(username, password):
         for user in users:
             user_info = user.strip().split(':')
             if len(user_info) == 2:
-                if username == user_info[0] and password == user_info[1]:
+                stored_username, stored_hashed_password = user_info
+                if username == stored_username and bcrypt.checkpw(password.encode('utf-8'), stored_hashed_password.encode('utf-8')):
                     return True
     except FileNotFoundError:
         return False
     return False
+
+def add_user(username, password):
+    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+    with open('users.txt', 'a') as f:
+        f.write(f"{username}:{hashed_password.decode('utf-8')}\n")
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():

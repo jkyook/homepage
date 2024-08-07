@@ -1,4 +1,4 @@
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, render_template, jsonify, request, redirect, url_for, session
 from googleapiclient.discovery import build
 import pickle
 import os.path
@@ -7,12 +7,20 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 import pandas as pd
 import io
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
+import os
 
 app = Flask(__name__)
+app.secret_key = 'your_secret_key'  # 세션을 안전하게 유지하기 위한 비밀키
+
+# 세션과 쿠키 타임아웃 설정
+app.permanent_session_lifetime = timedelta(minutes=1)  # 세션 타임아웃
+app.config['SESSION_COOKIE_AGE'] = 1 * 60  # 쿠키 타임아웃
 
 SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
 
+# 개발 환경 변수 (0: 자동 로그인, 1: 로그인 필요)
+LOGIN_OX = int(os.environ.get('LOGIN_OX', 0))  # 기본값은 1
 
 def get_drive_service():
     creds = None
@@ -30,9 +38,46 @@ def get_drive_service():
     service = build('drive', 'v3', credentials=creds)
     return service
 
+def check_credentials(username, password):
+    try:
+        with open('users.txt', 'r') as f:
+            users = f.readlines()
+        for user in users:
+            user_info = user.strip().split(':')
+            if len(user_info) == 2:
+                if username == user_info[0] and password == user_info[1]:
+                    return True
+    except FileNotFoundError:
+        return False
+    return False
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if 'username' in session or LOGIN_OX == 0:
+        return redirect(url_for('index'))
+
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        if check_credentials(username, password):
+            session.permanent = True  # 세션을 영구적으로 설정
+            session['username'] = username
+            return redirect(url_for('index'))
+        else:
+            return 'Invalid username or password', 403
+
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    session.pop('username', None)
+    return redirect(url_for('login'))
 
 @app.route('/files', methods=['GET'])
 def list_files():
+    if 'username' not in session and LOGIN_OX == 1:
+        return redirect(url_for('login'))
+
     service = get_drive_service()
     results = service.files().list(pageSize=200, fields="nextPageToken, files(id, name)").execute()
     items = results.get('files', [])
@@ -69,6 +114,9 @@ def list_files():
 
 @app.route('/data', methods=['POST'])
 def data():
+    if 'username' not in session and LOGIN_OX == 1:
+        return redirect(url_for('login'))
+
     file_id = request.form['file_id']
     service = get_drive_service()
     file = service.files().get_media(fileId=file_id).execute()
@@ -101,11 +149,11 @@ def data():
         app.logger.error(f"Error processing data: {e}")
         return jsonify({'error': str(e)}), 500
 
-
 @app.route('/')
 def index():
+    if 'username' not in session and LOGIN_OX == 1:
+        return redirect(url_for('login'))
     return render_template('index.html')
-
 
 if __name__ == '__main__':
     app.run(debug=True)

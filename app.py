@@ -14,13 +14,13 @@ app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # 세션을 안전하게 유지하기 위한 비밀키
 
 # 세션과 쿠키 타임아웃 설정
-app.permanent_session_lifetime = timedelta(minutes=1)  # 세션 타임아웃
-app.config['SESSION_COOKIE_AGE'] = 1 * 60  # 쿠키 타임아웃
+app.permanent_session_lifetime = timedelta(minutes=30)  # 세션 타임아웃
+app.config['SESSION_COOKIE_AGE'] = 30 * 60  # 쿠키 타임아웃
 
 SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
 
 # 개발 환경 변수 (0: 자동 로그인, 1: 로그인 필요)
-LOGIN_OX = int(os.environ.get('LOGIN_OX', 0))  # 기본값은 1
+LOGIN_OX = int(os.environ.get('LOGIN_OX', 1))  # 기본값은 1
 
 def get_drive_service():
     creds = None

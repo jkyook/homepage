@@ -50,13 +50,14 @@ def get_drive_service():
 
 
 def get_files_from_drive():
-    """Google Drive에서 파일 목록을 가져오는 함수"""
+    """Google Drive의 홈 디렉토리에서 파일 목록을 가져오는 함수"""
     service = get_drive_service()
     items = []
     page_token = None
 
     while True:
         response = service.files().list(
+            q="'root' in parents and trashed = false",
             pageSize=200,
             fields="nextPageToken, files(id, name)",
             pageToken=page_token

@@ -7,44 +7,98 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
     <style>
+        /* 스타일 시트 내부 */
         body {
-            font-family: Arial, sans-serif;
+            font-family: Arial, sans-serif; /* 기본 폰트 설정 */
             margin: 0;
             padding: 0;
+            position: relative; /* Filters 위치 조정을 위한 설정 */
         }
         h1 {
-            text-align: center;
-            margin: 20px 0;
+            text-align: center; /* 제목 가운데 정렬 */
+            margin: 20px 0; /* 상하 여백 */
         }
-        form {
-            text-align: center;
+        .filters {
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* 중앙 정렬 */
+            margin-bottom: 20px;
+        }
+        .filters select, .filters button {
+            margin: 10px 0;
+        }
+        .filters select {
+            padding: 5px;
+            font-size: 16px;
+        }
+        .filters button {
+            background-color: #007bff;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .filters button:hover {
+            background-color: #0056b3;
         }
         canvas {
-            display: block;
-            margin: 0 auto;
-            max-width: 100%;
-            height: auto;
+            display: block; /* canvas를 블록 요소로 변환하여 가운데 정렬 */
+            margin: 0 auto; /* canvas를 수평으로 가운데 정렬 */
+            max-width: 100%; /* 캔버스가 화면 크기에 맞게 조정됨 */
+            height: auto; /* 높이를 자동으로 조정 */
         }
-        #loading {
-            display: none; /* 기본적으로 숨김 */
+        .strategy-select {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            display: flex;
+            gap: 10px;
+        }
+        .loading-message, .chart-loading-message {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 10px;
+            background-color: rgba(0, 0, 0, 0.5);
+            color: white;
+            border-radius: 8px;
+            font-size: 14px;
             text-align: center;
-            font-size: 18px;
-            color: #007bff;
-            margin: 20px 0;
+        }
+        .chart-loading-message {
+            background-color: rgba(0, 0, 0, 0.5); /* 그래프 로딩 메시지 배경 색상 설정 */
         }
     </style>
 </head>
 <body>
     <h1>51 strategy</h1>
-    <form id="fileForm">
-        <label for="file_id">Select a date:</label>
-        <select id="file_id">
-            <option value="">--Select a date--</option>
+    <div class="strategy-select">
+        <select id="strategySelect">
+            <option value="">-- Select Strategy --</option>
+            <option value="bit">BIT</option>
+            <option value="kospi">KOSPI</option>
         </select>
-        <button type="submit">Plot Graph</button>
-    </form>
+    </div>
+    <div class="filters">
+        <form id="fileForm">
+            <label for="file_id">Select a date:</label>
+            <select id="file_id">
+                <option value="">--Select a date--</option>
+            </select>
+            <button type="submit">Plot Graph</button>
+        </form>
+    </div>
+    <div id="loadingMessage" class="loading-message">
+        Indexing... takes 30s
+    </div>
+    <div id="chartLoadingMessage" class="chart-loading-message">
+        Loading...
+    </div>
     <br>
-    <div id="loading">Loading...</div> <!-- 로딩 메시지 추가 -->
     <canvas id="myChart" width="1200" height="600"></canvas>
 </body>
 </html>

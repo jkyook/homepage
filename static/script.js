@@ -1,31 +1,76 @@
 document.addEventListener('DOMContentLoaded', function() {
-    fetch('/files')
-        .then(response => response.json())
-        .then(data => {
-            console.log('Received file data:', data);
-            const dropdown = document.getElementById('file_id');
-            if (!dropdown) {
-                console.error('Dropdown element not found');
-                return;
-            }
-            if (data.length === 0) {
-                console.warn('No file data received');
-                return;
-            }
-            data.forEach(file => {
-                const option = document.createElement('option');
-                option.value = file.id;
-                option.textContent = file.date || file.name;
-                dropdown.appendChild(option);
+    const loadingMessage = document.getElementById('loadingMessage');
+    const chartLoadingMessage = document.getElementById('chartLoadingMessage');
+    const fileDropdown = document.getElementById('file_id');
+    const strategySelect = document.getElementById('strategySelect');
+
+    function fetchFiles() {
+        loadingMessage.style.display = 'block'; // Show loading message
+
+        fetch('/files')
+            .then(response => response.json())
+            .then(data => {
+                loadingMessage.style.display = 'none'; // Hide loading message
+
+                console.log('Received file data:', data); // 데이터 로깅
+                if (!fileDropdown) {
+                    console.error('Dropdown element not found');
+                    return;
+                }
+                if (data.length === 0) {
+                    console.warn('No file data received');
+                    return;
+                }
+                fileDropdown.innerHTML = '<option value="">--Select a date--</option>'; // Reset options
+                data.forEach(file => {
+                    const option = document.createElement('option');
+                    option.value = file.id;
+                    option.textContent = file.date || file.name; // date가 없으면 name 사용
+                    fileDropdown.appendChild(option);
+                });
+            })
+            .catch(error => {
+                loadingMessage.style.display = 'none'; // Hide loading message on error
+                console.error('Error fetching file list:', error);
             });
-        })
-        .catch(error => console.error('Error fetching file list:', error));
+    }
+
+    fetchFiles(); // Initial file fetch
+
+    strategySelect.addEventListener('change', function() {
+        const selectedStrategy = strategySelect.value;
+        if (selectedStrategy) {
+            loadingMessage.style.display = 'block'; // Show loading message
+
+            fetch('/files')
+                .then(response => response.json())
+                .then(data => {
+                    loadingMessage.style.display = 'none'; // Hide loading message
+
+                    console.log('Received file data:', data); // 데이터 로깅
+                    const filteredData = data.filter(file => {
+                        return selectedStrategy === 'bit' ? file.date.startsWith('B') : file.date.startsWith('K');
+                    });
+                    fileDropdown.innerHTML = '<option value="">--Select a date--</option>'; // Reset options
+                    filteredData.forEach(file => {
+                        const option = document.createElement('option');
+                        option.value = file.id;
+                        option.textContent = file.date || file.name; // date가 없으면 name 사용
+                        fileDropdown.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    loadingMessage.style.display = 'none'; // Hide loading message on error
+                    console.error('Error fetching file list:', error);
+                });
+        }
+    });
 
     document.getElementById('fileForm').addEventListener('submit', function(event) {
         event.preventDefault();
-        const fileId = document.getElementById('file_id').value;
-        const loadingElement = document.getElementById('loading');
-        loadingElement.style.display = 'block'; // 로딩 메시지 표시
+        const fileId = fileDropdown.value;
+
+        chartLoadingMessage.style.display = 'block'; // Show chart loading message
 
         fetch('/data', {
             method: 'POST',
@@ -43,6 +88,8 @@ document.addEventListener('DOMContentLoaded', function() {
             return response.json();
         })
         .then(data => {
+            chartLoadingMessage.style.display = 'none'; // Hide chart loading message
+
             console.log('Data received from backend:', data);
 
             if (data.error) {
@@ -58,6 +105,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const ctx = document.getElementById('myChart').getContext('2d');
 
+            // Ensure `window.myChart` is a valid Chart instance before calling destroy
             if (window.myChart && window.myChart instanceof Chart) {
                 window.myChart.destroy();
             }
@@ -80,8 +128,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         {
                             label: 'long',
                             data: np1Values,
-                            borderColor: '#28a745',
-                            backgroundColor: 'rgba(40, 167, 69, 0.2)',
+                            borderColor: '#28a745',  // 밝은 녹색으로 변경
+                            backgroundColor: 'rgba(40, 167, 69, 0.2)',  // 밝은 녹색의 반투명 배경
                             borderWidth: 1,
                             pointRadius: 0.2,
                             fill: true,
@@ -90,8 +138,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         {
                             label: 'short',
                             data: np2Values,
-                            borderColor: '#b73d3d',
-                            backgroundColor: 'rgba(183, 61, 61, 0.2)',
+                            borderColor: '#b73d3d',  // 어두운 붉은색
+                            backgroundColor: 'rgba(183, 61, 61, 0.2)',  // 어두운 붉은색의 반투명 배경
                             borderWidth: 1,
                             pointRadius: 0.2,
                             fill: true,
@@ -100,8 +148,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         {
                             label: 'profit',
                             data: prfValues,
-                            borderColor: '#f00',
-                            backgroundColor: 'rgba(255, 0, 0, 0.2)',
+                            borderColor: '#f00',  // 빨간색으로 변경
+                            backgroundColor: 'rgba(255, 0, 0, 0.2)',  // 빨간색의 반투명 배경
                             borderWidth: 3,
                             pointRadius: 0.7,
                             fill: false,
@@ -192,12 +240,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 }
             });
-
-            loadingElement.style.display = 'none'; // 로딩 메시지 숨김
         })
         .catch(error => {
+            chartLoadingMessage.style.display = 'none'; // Hide chart loading message on error
             console.error('Error fetching data:', error);
-            loadingElement.style.display = 'none'; // 로딩 메시지 숨김
         });
     });
 });

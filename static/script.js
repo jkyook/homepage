@@ -1,13 +1,27 @@
+//import Chart from 'https://cdn.jsdelivr.net/npm/chart.js@3.8.0/dist/chart.esm.min.js';
+
 document.addEventListener('DOMContentLoaded', function() {
     const loadingMessage = document.getElementById('loadingMessage');
     const chartLoadingMessage = document.getElementById('chartLoadingMessage');
     const fileDropdown = document.getElementById('file_id');
     const strategySelect = document.getElementById('strategySelect');
+    const startDateInput = document.getElementById('startDate');
+    const endDateInput = document.getElementById('endDate');
+    const loadFilesButton = document.getElementById('loadFiles');
+    const resetFilesButton = document.getElementById('resetFiles');
+    const plotAvgButton = document.getElementById('plotAvg');
 
-    function fetchFiles() {
+    function fetchFiles(startDate = '', endDate = '', strategy = '') {
         loadingMessage.style.display = 'block'; // Show loading message
 
-        fetch('/files')
+        // Construct the query string with optional parameters
+        const queryString = new URLSearchParams({
+            start_date: startDate,
+            end_date: endDate,
+            strategy: strategy
+        }).toString();
+
+        fetch('/files?' + queryString)
             .then(response => response.json())
             .then(data => {
                 loadingMessage.style.display = 'none'; // Hide loading message
@@ -35,35 +49,168 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
 
-    fetchFiles(); // Initial file fetch
+    function updateFileDropdown() {
+        const startDate = startDateInput.value;
+        const endDate = endDateInput.value;
+        const strategy = strategySelect.value;
+        fetchFiles(startDate, endDate, strategy);
+    }
+
+    loadFilesButton.addEventListener('click', function() {
+        updateFileDropdown();
+    });
+
+//################
+
+    function plotAverage() {
+        chartLoadingMessage.style.display = 'block'; // Show chart loading message
+
+        // Collect all file IDs from the dropdown
+        const fileIds = Array.from(fileDropdown.options)
+            .filter(option => option.value)  // Remove options without value
+            .map(option => option.value);
+
+        if (fileIds.length === 0) {
+            console.error('No files available in the dropdown.');
+            alert('No files available to plot.');
+            return;
+        }
+
+        Promise.all(fileIds.map(fileId =>
+            fetch('/data', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: new URLSearchParams({
+                    'file_id': fileId
+                })
+            }).then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            }).catch(error => {
+                console.error(`Error fetching data for file ${fileId}:`, error);
+                return []; // Return empty array in case of error
+            })
+        ))
+        .then(results => {
+            chartLoadingMessage.style.display = 'none'; // Hide chart loading message
+
+            // Flatten the results array and filter data
+            const allData = results.flat().filter(row => {
+                const time = row.time;
+                return time >= '09:00:00' && time <= '15:00:00';
+            });
+
+            console.log('Filtered Data:', allData); // Log data for debugging
+
+            if (allData.length === 0) {
+                console.error('No data available for the specified time range.');
+                alert('No data available for the selected time range.');
+                return;
+            }
+
+            // Calculate average 'prf' for each 'time'
+            const timePrfMap = allData.reduce((acc, row) => {
+                const time = row.time;
+                const prf = parseFloat(row.prf);
+
+                if (!acc[time]) {
+                    acc[time] = { totalPrf: 0, count: 0 };
+                }
+
+                acc[time].totalPrf += prf;
+                acc[time].count += 1;
+
+                return acc;
+            }, {});
+
+            console.log('Time PRF Map:', timePrfMap); // Log average calculations for debugging
+
+            const times = Object.keys(timePrfMap).sort(); // Sort times to ensure proper chronological order
+            const avgPrfs = times.map(time => timePrfMap[time].totalPrf / timePrfMap[time].count);
+
+            const ctx = document.getElementById('myChart').getContext('2d');
+
+            // Ensure `window.myChart` is a valid Chart instance before calling destroy
+            if (window.myChart && window.myChart instanceof Chart) {
+                window.myChart.destroy();
+            }
+
+            window.myChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: times,
+                    datasets: [{
+                        label: 'Average PRF',
+                        data: avgPrfs.map((avgPrf, index) => ({
+                            x: times[index],
+                            y: avgPrf
+                        })),
+                        borderColor: '#007bff',
+                        backgroundColor: 'rgba(0, 123, 255, 0.2)',
+                        borderWidth: 2,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                unit: 'hour', // or 'minute', depending on your data
+                                tooltipFormat: 'll HH:mm'
+                            },
+                            title: {
+                                display: true,
+                                text: 'Time'
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Average PRF'
+                            }
+                        }
+                    }
+                }
+            });
+        })
+        .catch(error => {
+            chartLoadingMessage.style.display = 'none'; // Hide chart loading message on error
+            console.error('Error processing data for chart:', error);
+        });
+    }
+
+
+
+//################
+
+    plotAvgButton.addEventListener('click', function() {
+        plotAverage();
+    });
+
+
+    // Add event listener for the reset button
+    resetFilesButton.addEventListener('click', function() {
+        // Clear the date inputs
+        startDateInput.value = '';
+        endDateInput.value = '';
+
+        // Optionally, you might want to trigger a load or update to refresh the file list
+        updateFileDropdown();
+    });
 
     strategySelect.addEventListener('change', function() {
-        const selectedStrategy = strategySelect.value;
-        if (selectedStrategy) {
-            loadingMessage.style.display = 'block'; // Show loading message
-
-            fetch('/files')
-                .then(response => response.json())
-                .then(data => {
-                    loadingMessage.style.display = 'none'; // Hide loading message
-
-                    console.log('Received file data:', data); // 데이터 로깅
-                    const filteredData = data.filter(file => {
-                        return selectedStrategy === 'bit' ? file.date.startsWith('B') : file.date.startsWith('K');
-                    });
-                    fileDropdown.innerHTML = '<option value="">--Select a date--</option>'; // Reset options
-                    filteredData.forEach(file => {
-                        const option = document.createElement('option');
-                        option.value = file.id;
-                        option.textContent = file.date || file.name; // date가 없으면 name 사용
-                        fileDropdown.appendChild(option);
-                    });
-                })
-                .catch(error => {
-                    loadingMessage.style.display = 'none'; // Hide loading message on error
-                    console.error('Error fetching file list:', error);
-                });
-        }
+        // Optional: Update file dropdown when strategy changes
+        const startDate = startDateInput.value;
+        const endDate = endDateInput.value;
+        const strategy = strategySelect.value;
+        fetchFiles(startDate, endDate, strategy);
     });
 
     document.getElementById('fileForm').addEventListener('submit', function(event) {

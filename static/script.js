@@ -129,6 +129,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     borderColor: color,
                     backgroundColor: color + '20', // Add transparency
                     borderWidth: 2,
+//                    borderWidth: fileId === fileIds[fileIds.length - 1] ? 3 : 2,  // 마지막 파일의 데이터는 굵은 선
                     fill: false
                 });
             });
@@ -170,6 +171,40 @@ document.addEventListener('DOMContentLoaded', function() {
                 fill: false
             });
 
+            // Find the maximum value in avgPrfLine
+            const maxAvgPrf = Math.max(...avgPrfLine);
+            const maxAvgPrfIndex = avgPrfLine.indexOf(maxAvgPrf);
+            datasets.push({
+                label: 'Max Avg PRF',
+                data: [{
+                    x: xNew[maxAvgPrfIndex],
+                    y: maxAvgPrf
+                }],
+                borderColor: 'blue',
+                backgroundColor: 'blue',
+                borderWidth: 1,
+                pointRadius: 5,
+                fill: false
+            });
+
+//            // Find the maximum value in avgPrfLine
+//            const maxAvgPrf = Math.max(...avgPrfLine);
+//            const maxAvgPrfIndex = avgPrfLine.indexOf(maxAvgPrf);
+//
+//            // Add a point for the maximum average PRF value
+//            datasets.push({
+//                label: 'Max Avg PRF',
+//                data: [{
+//                    x: xNew[maxAvgPrfIndex],
+//                    y: maxAvgPrf
+//                }],
+//                borderColor: 'blue',
+//                backgroundColor: 'blue',
+//                borderWidth: 1,
+//                pointRadius: 5,  // Point size
+//                fill: false
+//            });
+
             // Draw the chart
             const ctx = document.getElementById('myChart').getContext('2d');
 
@@ -205,7 +240,44 @@ document.addEventListener('DOMContentLoaded', function() {
                             }
                         }
                     }
+                },
+//
+
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+
+                                if (label) {
+                                    label += ': ';
+                                }
+                                label += context.parsed.y !== null ? context.parsed.y : '';
+                                return label;
+                            }
+                        }
+                    },
+                    annotation: {
+                        annotations: {
+                            maxPrfLabel: {
+                                type: 'label',
+                                xValue: xNew[maxAvgPrfIndex],
+                                yValue: maxAvgPrf,
+                                backgroundColor: 'blue',
+                                borderRadius: 4,
+                                content: 'Max Avg PRF: ' + maxAvgPrf.toFixed(2),
+                                color: 'white',
+                                font: {
+                                    weight: 'bold'
+                                },
+                                position: 'center',
+                                yAdjust: -10  // Adjust position to place the label above the point
+                            }
+                        }
+                    }
                 }
+
+//
             });
         })
         .catch(error => {

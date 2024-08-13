@@ -121,7 +121,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 // Create dataset for the file
                 datasets.push({
-                    label: `File ${index + 1}`, // Use file name or date if available
+                    label: fileDropdown.options[index + 1].text.replace(/^[BK]\s*/, ''), // 'B' 또는 'K'를 제거하고 나머지 부분만 사용
                     data: data.map(row => ({
                         x: new Date(row.time), // Convert time to Date object
                         y: parseFloat(row.prf)
@@ -162,10 +162,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     x: xNew[x],
                     y: avgPrfLine[x]
                 })),
-                borderColor: '#000000',
+                borderColor: '#f00',
                 backgroundColor: '#00000020',
                 borderWidth: 2,
-                borderDash: [5, 5],
+//                borderDash: [5, 5],
+                pointRadius: 0.7,
                 fill: false
             });
 

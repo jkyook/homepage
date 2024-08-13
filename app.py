@@ -5,6 +5,7 @@ import pickle
 from googleapiclient.discovery import build
 from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import InstalledAppFlow
+import google.auth.exceptions  # 이 부분을 추가하세요
 import pandas as pd
 import io
 import re
@@ -31,20 +32,59 @@ cache = {
 
 CACHE_EXPIRY = 300  # 캐시 만료 시간 (초), 예: 5분
 
+from flask import redirect, url_for
+
+
+@app.route('/authorize')
+def authorize():
+    # Google OAuth 인증을 위한 플로우 시작
+    flow = InstalledAppFlow.from_client_secrets_file('credentials.json', SCOPES)
+    creds = flow.run_local_server(port=0)
+
+    # 인증 후, creds를 저장하거나 사용하여 작업 수행
+    with open('token.pickle', 'wb') as token:
+        pickle.dump(creds, token)
+
+    return redirect(url_for('home'))  # 인증 후 홈 페이지로 리다이렉트
+
+
+# def get_drive_service():
+#     creds = None
+#     if os.path.exists('token.pickle'):
+#         with open('token.pickle', 'rb') as token:
+#             creds = pickle.load(token)
+#     if not creds or not creds.valid:
+#         if creds and creds.expired and creds.refresh_token:
+#             creds.refresh(Request())
+#         else:
+#             flow = InstalledAppFlow.from_client_secrets_file('credentials.json', SCOPES)
+#             creds = flow.run_local_server(port=0)
+#         with open('token.pickle', 'wb') as token:
+#             pickle.dump(creds, token)
+#     service = build('drive', 'v3', credentials=creds)
+#     return service
 
 def get_drive_service():
     creds = None
     if os.path.exists('token.pickle'):
         with open('token.pickle', 'rb') as token:
             creds = pickle.load(token)
+
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
+            try:
+                creds.refresh(Request())
+            except google.auth.exceptions.RefreshError:
+                # 만약 갱신에 실패하면, 새 인증을 요구합니다.
+                os.remove('token.pickle')  # 만료된 토큰 파일 삭제
+                return redirect(url_for('authorize'))  # 또는 새 인증 절차로 유도
         else:
             flow = InstalledAppFlow.from_client_secrets_file('credentials.json', SCOPES)
             creds = flow.run_local_server(port=0)
+
         with open('token.pickle', 'wb') as token:
             pickle.dump(creds, token)
+
     service = build('drive', 'v3', credentials=creds)
     return service
 

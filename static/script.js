@@ -76,7 +76,10 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        Promise.all(fileIds.map(fileId =>
+        // Colors for different files
+        const colors = ['#007bff', '#28a745', '#dc3545', '#ffc107', '#17a2b8'];
+
+        Promise.all(fileIds.map((fileId, index) =>
             fetch('/data', {
                 method: 'POST',
                 headers: {
@@ -98,40 +101,75 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(results => {
             chartLoadingMessage.style.display = 'none'; // Hide chart loading message
 
-            // Flatten the results array and filter data
-            const allData = results.flat().filter(row => {
-                const time = row.time;
-                return time >= '09:00:00' && time <= '15:00:00';
+            // Prepare datasets for the chart
+            const datasets = [];
+            const allPrfData = [];
+            const allLengths = [];
+            const timeSets = [];
+
+            results.forEach((data, index) => {
+                const color = colors[index % colors.length]; // Use different colors for different files
+
+                // Convert data to time and prf arrays
+                const timeData = data.map(row => new Date(row.time));
+                const prfData = data.map(row => parseFloat(row.prf));
+
+                timeSets.push(timeData);
+
+                allPrfData.push(prfData);
+                allLengths.push(prfData.length);
+
+                // Create dataset for the file
+                datasets.push({
+                    label: `File ${index + 1}`, // Use file name or date if available
+                    data: data.map(row => ({
+                        x: new Date(row.time), // Convert time to Date object
+                        y: parseFloat(row.prf)
+                    })),
+                    borderColor: color,
+                    backgroundColor: color + '20', // Add transparency
+                    borderWidth: 2,
+                    fill: false
+                });
             });
 
-            console.log('Filtered Data:', allData); // Log data for debugging
-
-            if (allData.length === 0) {
-                console.error('No data available for the specified time range.');
-                alert('No data available for the selected time range.');
+            if (datasets.length === 0) {
+                console.error('No valid data available for plotting.');
+                alert('No data available to plot.');
                 return;
             }
 
-            // Calculate average 'prf' for each 'time'
-            const timePrfMap = allData.reduce((acc, row) => {
-                const time = row.time;
-                const prf = parseFloat(row.prf);
+            // Create the average line
+            const maxLength = Math.max(...allLengths);
+            const xNew = Array.from({ length: maxLength }, (_, i) => i);
 
-                if (!acc[time]) {
-                    acc[time] = { totalPrf: 0, count: 0 };
-                }
+            const interpolatedData = allPrfData.map(prfArray => {
+                const xOld = Array.from({ length: prfArray.length }, (_, i) => i);
+                return xNew.map(x => {
+                    const oldIndex = Math.min(xOld.length - 1, Math.max(0, Math.floor(x)));
+                    const nextIndex = Math.min(oldIndex + 1, xOld.length - 1);
+                    const t = x - oldIndex;
+                    return prfArray[oldIndex] * (1 - t) + prfArray[nextIndex] * t;
+                });
+            });
 
-                acc[time].totalPrf += prf;
-                acc[time].count += 1;
+            const avgPrf = interpolatedData.reduce((acc, val) => val.map((v, i) => (acc[i] || 0) + v), []);
+            const avgPrfLine = avgPrf.map(v => v / interpolatedData.length);
 
-                return acc;
-            }, {});
+            datasets.push({
+                label: 'Average PRF',
+                data: xNew.map(x => ({
+                    x: xNew[x],
+                    y: avgPrfLine[x]
+                })),
+                borderColor: '#000000',
+                backgroundColor: '#00000020',
+                borderWidth: 2,
+                borderDash: [5, 5],
+                fill: false
+            });
 
-            console.log('Time PRF Map:', timePrfMap); // Log average calculations for debugging
-
-            const times = Object.keys(timePrfMap).sort(); // Sort times to ensure proper chronological order
-            const avgPrfs = times.map(time => timePrfMap[time].totalPrf / timePrfMap[time].count);
-
+            // Draw the chart
             const ctx = document.getElementById('myChart').getContext('2d');
 
             // Ensure `window.myChart` is a valid Chart instance before calling destroy
@@ -142,18 +180,7 @@ document.addEventListener('DOMContentLoaded', function() {
             window.myChart = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: times,
-                    datasets: [{
-                        label: 'Average PRF',
-                        data: avgPrfs.map((avgPrf, index) => ({
-                            x: times[index],
-                            y: avgPrf
-                        })),
-                        borderColor: '#007bff',
-                        backgroundColor: 'rgba(0, 123, 255, 0.2)',
-                        borderWidth: 2,
-                        fill: true
-                    }]
+                    datasets: datasets
                 },
                 options: {
                     responsive: true,
@@ -161,7 +188,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         x: {
                             type: 'time',
                             time: {
-                                unit: 'hour', // or 'minute', depending on your data
+                                unit: 'minute', // Adjust according to the time granularity
                                 tooltipFormat: 'll HH:mm'
                             },
                             title: {
@@ -173,7 +200,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             beginAtZero: true,
                             title: {
                                 display: true,
-                                text: 'Average PRF'
+                                text: 'PRF'
                             }
                         }
                     }
@@ -185,7 +212,6 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Error processing data for chart:', error);
         });
     }
-
 
 
 //################

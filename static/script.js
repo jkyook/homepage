@@ -129,7 +129,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     borderColor: color,
                     backgroundColor: color + '20', // Add transparency
                     borderWidth: 2,
-//                    borderWidth: fileId === fileIds[fileIds.length - 1] ? 3 : 2,  // 마지막 파일의 데이터는 굵은 선
                     fill: false
                 });
             });
@@ -160,13 +159,12 @@ document.addEventListener('DOMContentLoaded', function() {
             datasets.push({
                 label: 'Average PRF',
                 data: xNew.map(x => ({
-                    x: xNew[x],
+                    x: new Date(xNew[x]),
                     y: avgPrfLine[x]
                 })),
                 borderColor: '#f00',
                 backgroundColor: '#00000020',
                 borderWidth: 2,
-//                borderDash: [5, 5],
                 pointRadius: 0.7,
                 fill: false
             });
@@ -177,7 +175,7 @@ document.addEventListener('DOMContentLoaded', function() {
             datasets.push({
                 label: 'Max Avg PRF',
                 data: [{
-                    x: xNew[maxAvgPrfIndex],
+                    x: new Date(xNew[maxAvgPrfIndex]),
                     y: maxAvgPrf
                 }],
                 borderColor: 'blue',
@@ -187,23 +185,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 fill: false
             });
 
-//            // Find the maximum value in avgPrfLine
-//            const maxAvgPrf = Math.max(...avgPrfLine);
-//            const maxAvgPrfIndex = avgPrfLine.indexOf(maxAvgPrf);
-//
-//            // Add a point for the maximum average PRF value
-//            datasets.push({
-//                label: 'Max Avg PRF',
-//                data: [{
-//                    x: xNew[maxAvgPrfIndex],
-//                    y: maxAvgPrf
-//                }],
-//                borderColor: 'blue',
-//                backgroundColor: 'blue',
-//                borderWidth: 1,
-//                pointRadius: 5,  // Point size
-//                fill: false
-//            });
+            // Update the resultDisplay with the maxAvgPrf value
+            document.getElementById('resultDisplay').textContent = `Max Average PRF: ${maxAvgPrf.toFixed(2)}`;
+
 
             // Draw the chart
             const ctx = document.getElementById('myChart').getContext('2d');
@@ -241,8 +225,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     }
                 },
-//
-
                 plugins: {
                     tooltip: {
                         callbacks: {
@@ -261,7 +243,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         annotations: {
                             maxPrfLabel: {
                                 type: 'label',
-                                xValue: xNew[maxAvgPrfIndex],
+                                xValue: new Date(xNew[maxAvgPrfIndex]),
                                 yValue: maxAvgPrf,
                                 backgroundColor: 'blue',
                                 borderRadius: 4,
@@ -276,8 +258,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     }
                 }
-
-//
             });
         })
         .catch(error => {

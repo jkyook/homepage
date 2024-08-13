@@ -3,9 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>51 strategy</title>
+    <title>51 Strategy</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
+<!--    <script type="module" src="script.js"></script>-->
+    <script type="module" src="{{ url_for('static', filename='script.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
     <style>
         /* 스타일 시트 내부 */
         body {
@@ -49,12 +52,17 @@
             max-width: 100%; /* 캔버스가 화면 크기에 맞게 조정됨 */
             height: auto; /* 높이를 자동으로 조정 */
         }
-        .strategy-select {
+        .strategy-select, .date-filter {
             position: absolute;
             top: 10px;
-            left: 10px;
             display: flex;
             gap: 10px;
+        }
+        .strategy-select {
+            left: 10px;
+        }
+        .date-filter {
+            right: 10px;
         }
         .loading-message, .chart-loading-message {
             display: none;
@@ -75,13 +83,20 @@
     </style>
 </head>
 <body>
-    <h1>51 strategy</h1>
+    <h1>51 Strategy</h1>
     <div class="strategy-select">
         <select id="strategySelect">
             <option value="">-- Select Strategy --</option>
             <option value="bit">BIT</option>
             <option value="kospi">KOSPI</option>
         </select>
+    </div>
+    <div class="date-filter">
+        <input type="date" id="startDate">
+        <input type="date" id="endDate">
+        <button id="loadFiles">Load</button>
+        <button id="resetFiles">Reset</button>
+        <button id="plotAvg">Plot Avg</button>
     </div>
     <div class="filters">
         <form id="fileForm">

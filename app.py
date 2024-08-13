@@ -75,9 +75,13 @@ def get_files_from_drive():
 @app.route('/files', methods=['GET'])
 def list_files():
     strategy = request.args.get('strategy', '')
+    start_date_str = request.args.get('start_date', '')
+    end_date_str = request.args.get('end_date', '')
     current_time = time.time()
+
+    # 캐시 확인 및 갱신
     if cache['files'] is None or (current_time - cache['timestamp']) > CACHE_EXPIRY:
-        # 캐시가 없거나 캐시 만료 시 Google Drive에서 파일 목록을 가져옵니다.
+        # Google Drive에서 파일 목록을 가져옵니다.
         items = get_files_from_drive()
 
         filtered_files = []
@@ -87,24 +91,42 @@ def list_files():
                 match = re.search(r'_(\d{2}-\d{2})-\d{2}-\d{2}', item['name'])
                 date_str = match.group(1) if match else 'Unknown'
 
-                try:
-                    date_obj = datetime.strptime(date_str, '%m-%d')
-                    formatted_date = 'B ' + date_obj.strftime('%m-%d') if '_m' in item[
-                        'name'] else 'K ' + date_obj.strftime('%m-%d')
-                except ValueError:
-                    formatted_date = 'Unknown'
+                # 날짜 포맷팅: '08-09' 형식을 '08-09'로 저장
+                formatted_date = 'B ' + date_str if '_m' in item['name'] else 'K ' + date_str
 
                 filtered_files.append({'id': item['id'], 'name': item['name'], 'date': formatted_date})
 
+        # 캐시에 필터링된 파일 목록 저장
         cache['files'] = filtered_files
         cache['timestamp'] = current_time
 
-    if strategy == 'bit':
-        filtered_files = [file for file in cache['files'] if file['date'].startswith('B')]
-    elif strategy == 'kospi':
-        filtered_files = [file for file in cache['files'] if file['date'].startswith('K')]
+    # 날짜 범위 필터링
+    if start_date_str and end_date_str:
+        try:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+            end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+
+            def extract_date_from_filename(filename):
+                # '08-09-15-29'에서 '08-09' 부분 추출
+                match = re.search(r'_(\d{2}-\d{2})-\d{2}-\d{2}', filename)
+                if match:
+                    return datetime.strptime(match.group(1), '%m-%d').date().replace(year=datetime.now().year)
+                return None
+
+            # 날짜 범위에 포함되는 파일만 필터링
+            filtered_files = [file for file in cache['files']
+                              if extract_date_from_filename(file['name']) and start_date <= extract_date_from_filename(file['name']) <= end_date]
+
+        except ValueError:
+            filtered_files = []
     else:
         filtered_files = cache['files']
+
+    # 전략 필터링
+    if strategy == 'bit':
+        filtered_files = [file for file in filtered_files if file['date'].startswith('B')]
+    elif strategy == 'kospi':
+        filtered_files = [file for file in filtered_files if file['date'].startswith('K')]
 
     return jsonify(filtered_files)
 

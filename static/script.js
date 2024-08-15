@@ -590,7 +590,7 @@ function startLiveUpdate() {
     updateChart();
 
     // 1분마다 업데이트
-    setInterval(updateChart, 60000);
+    setInterval(updateChart, 30000);
 }
 
 // 페이지 로드 시 실시간 업데이트 시작

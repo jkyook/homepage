@@ -229,5 +229,29 @@ def index():
     return render_template('index.html')
 
 
+@app.route('/live_data', methods=['GET'])
+def live_data():
+    service = get_drive_service()
+
+    # 구글 드라이브에서 "(e)df_npp_m" 파일 찾기
+    files = service.files().list(q="name contains '(e)df_npp_m'", spaces='drive', fields='files(id, name)').execute()
+
+    if not files['files']:
+        return jsonify({'error': 'File not found'})
+
+    file_id = files['files'][0]['id']
+
+    # 파일 내용 읽기
+    file_content = service.files().get_media(fileId=file_id).execute()
+
+    # CSV 파일 파싱
+    df = pd.read_csv(io.BytesIO(file_content))
+
+    # 필요한 열만 선택
+    data = df[['time', 'now_prc', 'np1', 'np2', 'prf']].to_dict(orient='records')
+
+    return jsonify(data)
+
+
 if __name__ == '__main__':
     app.run(debug=True)

@@ -5,6 +5,7 @@ import pickle
 from googleapiclient.discovery import build
 from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import InstalledAppFlow
+from google.oauth2.credentials import Credentials  # 이 줄을 추가
 import pandas as pd
 import io
 import re

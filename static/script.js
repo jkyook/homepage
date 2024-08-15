@@ -60,6 +60,7 @@ document.addEventListener('DOMContentLoaded', function() {
         updateFileDropdown();
     });
 
+
 //################
 
     function plotAverage() {
@@ -168,35 +169,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 pointRadius: 0.7,
                 fill: false
             });
-
-//            // Create the xNew array based on the maximum length of the arrays
-//            const maxLength = Math.max(...allPrfData.map(arr => arr.length));
-//            const xNew = Array.from({ length: maxLength }, (_, i) => i);
-//
-//            // Calculate the average PRF without interpolation
-//            const avgPrf = xNew.map(i => {
-//                const sum = allPrfData.reduce((acc, prfArray) => {
-//                    return acc + (prfArray[i] !== undefined ? prfArray[i] : 0);
-//                }, 0);
-//                const count = allPrfData.reduce((acc, prfArray) => acc + (prfArray[i] !== undefined ? 1 : 0), 0);
-//                return count > 0 ? sum / count : 0;
-//            });
-//
-//            // Create the dataset using the averaged data
-//            datasets.push({
-//                label: 'Average PRF',
-//                data: xNew.map(i => ({
-//                    x: new Date(i),  // x value is the index
-//                    y: avgPrf[i]     // The averaged y value
-//                })),
-//                borderColor: '#f00',
-//                backgroundColor: '#00000020',
-//                borderWidth: 2,
-//                pointRadius: 0.7,
-//                fill: false
-//            });
-
-
 
             // Find the maximum value in avgPrfLine
             const maxAvgPrf = Math.max(...avgPrfLine);
@@ -502,3 +474,125 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
+
+
+
+let liveChart;
+
+function startLiveUpdate() {
+    // 기존 차트가 있다면 제거
+    if (liveChart) {
+        liveChart.destroy();
+    }
+
+    const ctx = document.getElementById('liveChart').getContext('2d');
+    liveChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            datasets: [
+                {
+                    label: 'now_prc',
+                    yAxisID: 'y1',
+                    borderColor: 'blue',
+                    borderWidth: 1,
+                    pointRadius: 0.2,
+                    fill: false
+                },
+                {
+                    label: 'np1',
+                    yAxisID: 'y2',
+                    borderColor: 'red',
+                    borderWidth: 1,
+                    pointRadius: 0.2,
+                    fill: false
+                },
+                {
+                    label: 'np2',
+                    yAxisID: 'y2',
+                    borderColor: 'green',
+                    borderWidth: 1,
+                    pointRadius: 0.2,
+                    fill: false
+                },
+                {
+                    label: 'prf',
+                    yAxisID: 'y2',
+                    borderColor: 'purple',
+                    borderWidth: 1,
+                    pointRadius: 0.2,
+                    fill: false
+                }
+            ]
+        },
+        options: {
+            scales: {
+                x: {
+                    type: 'time',
+                    time: {
+                        unit: 'minute'
+                    }
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                },
+                y2: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                }
+            }
+        }
+    });
+
+    const formatTime = (hhmmss) => {
+        const timeStr = hhmmss.toString().padStart(6, '0');
+        const hours = timeStr.substring(0, 2);
+        const minutes = timeStr.substring(2, 4);
+        const seconds = timeStr.substring(4, 6);
+
+        const now = new Date(); // 현재 날짜와 시간을 가져옴
+        now.setHours(hours, minutes, seconds, 0); // 현재 날짜에 입력된 HH:MM:SS 적용
+
+        return now.toISOString(); // ISO 형식으로 변환하여 반환
+    };
+
+    function updateChart() {
+        fetch('/live_data')
+            .then(response => response.json())
+            .then(data => {
+                console.log('Fetched data:', data); // 데이터를 콘솔에 출력
+
+                const formattedData = data.map(d => ({
+                    time: formatTime(d.time), // time 데이터를 ISO 8601 형식으로 변환
+                    now_prc: d.now_prc,
+                    np1: d.np1,
+                    np2: d.np2,
+                    prf: d.prf
+                }));
+
+                // Console 로그로 변환된 데이터 확인
+                console.log('Formatted data:', formattedData);
+
+                liveChart.data.labels = formattedData.map(d => d.time);
+                liveChart.data.datasets[0].data = formattedData.map(d => ({ x: d.time, y: d.now_prc }));
+                liveChart.data.datasets[1].data = formattedData.map(d => ({ x: d.time, y: d.np1 }));
+                liveChart.data.datasets[2].data = formattedData.map(d => ({ x: d.time, y: d.np2 }));
+                liveChart.data.datasets[3].data = formattedData.map(d => ({ x: d.time, y: d.prf }));
+                liveChart.update();
+            })
+            .catch(error => console.error('Error:', error));
+    }
+
+
+    // 초기 업데이트
+    updateChart();
+
+    // 1분마다 업데이트
+    setInterval(updateChart, 60000);
+}
+
+// 페이지 로드 시 실시간 업데이트 시작
+document.addEventListener('DOMContentLoaded', startLiveUpdate);
+

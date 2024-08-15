@@ -5,7 +5,7 @@ import pickle
 from googleapiclient.discovery import build
 from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import InstalledAppFlow
-import google.auth.exceptions  # 이 부분을 추가하세요
+from google.oauth2.credentials import Credentials  # 이 줄을 추가
 import pandas as pd
 import io
 import re
@@ -32,58 +32,32 @@ cache = {
 
 CACHE_EXPIRY = 300  # 캐시 만료 시간 (초), 예: 5분
 
-from flask import redirect, url_for
-
-
-@app.route('/authorize')
-def authorize():
-    # Google OAuth 인증을 위한 플로우 시작
-    flow = InstalledAppFlow.from_client_secrets_file('credentials.json', SCOPES)
-    creds = flow.run_local_server(port=0)
-
-    # 인증 후, creds를 저장하거나 사용하여 작업 수행
-    with open('token.pickle', 'wb') as token:
-        pickle.dump(creds, token)
-
-    return redirect(url_for('home'))  # 인증 후 홈 페이지로 리다이렉트
-
-
-# def get_drive_service():
-#     creds = None
-#     if os.path.exists('token.pickle'):
-#         with open('token.pickle', 'rb') as token:
-#             creds = pickle.load(token)
-#     if not creds or not creds.valid:
-#         if creds and creds.expired and creds.refresh_token:
-#             creds.refresh(Request())
-#         else:
-#             flow = InstalledAppFlow.from_client_secrets_file('credentials.json', SCOPES)
-#             creds = flow.run_local_server(port=0)
-#         with open('token.pickle', 'wb') as token:
-#             pickle.dump(creds, token)
-#     service = build('drive', 'v3', credentials=creds)
-#     return service
 
 def get_drive_service():
     creds = None
-    if os.path.exists('token.pickle'):
-        with open('token.pickle', 'rb') as token:
-            creds = pickle.load(token)
+    # 기존 자격 증명 파일(token.json)이 있는지 확인
+    if os.path.exists('token.json'):
+        creds = Credentials.from_authorized_user_file('token.json', SCOPES)
 
+    # 자격 증명이 없거나 유효하지 않은 경우
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
             try:
                 creds.refresh(Request())
             except google.auth.exceptions.RefreshError:
-                # 만약 갱신에 실패하면, 새 인증을 요구합니다.
-                os.remove('token.pickle')  # 만료된 토큰 파일 삭제
-                return redirect(url_for('authorize'))  # 또는 새 인증 절차로 유도
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file('credentials.json', SCOPES)
+                # 토큰 갱신 실패 시, 토큰 파일 삭제하여 재인증 유도
+                os.remove('token.json')
+                creds = None
+
+        if not creds:
+            # 새로운 인증 절차 진행
+            flow = InstalledAppFlow.from_client_secrets_file(
+                'credentials.json', SCOPES)
             creds = flow.run_local_server(port=0)
 
-        with open('token.pickle', 'wb') as token:
-            pickle.dump(creds, token)
+        # 새로운 자격 증명을 저장
+        with open('token.json', 'w') as token:
+            token.write(creds.to_json())
 
     service = build('drive', 'v3', credentials=creds)
     return service
@@ -253,6 +227,30 @@ def index():
     if 'username' not in session and LOGIN_OX == 1:
         return redirect(url_for('login'))
     return render_template('index.html')
+
+
+@app.route('/live_data', methods=['GET'])
+def live_data():
+    service = get_drive_service()
+
+    # 구글 드라이브에서 "(e)df_npp_m" 파일 찾기
+    files = service.files().list(q="name contains '(e)df_npp_m'", spaces='drive', fields='files(id, name)').execute()
+
+    if not files['files']:
+        return jsonify({'error': 'File not found'})
+
+    file_id = files['files'][0]['id']
+
+    # 파일 내용 읽기
+    file_content = service.files().get_media(fileId=file_id).execute()
+
+    # CSV 파일 파싱
+    df = pd.read_csv(io.BytesIO(file_content))
+
+    # 필요한 열만 선택
+    data = df[['time', 'now_prc', 'np1', 'np2', 'prf']].to_dict(orient='records')
+
+    return jsonify(data)
 
 
 if __name__ == '__main__':

@@ -169,6 +169,35 @@ document.addEventListener('DOMContentLoaded', function() {
                 fill: false
             });
 
+//            // Create the xNew array based on the maximum length of the arrays
+//            const maxLength = Math.max(...allPrfData.map(arr => arr.length));
+//            const xNew = Array.from({ length: maxLength }, (_, i) => i);
+//
+//            // Calculate the average PRF without interpolation
+//            const avgPrf = xNew.map(i => {
+//                const sum = allPrfData.reduce((acc, prfArray) => {
+//                    return acc + (prfArray[i] !== undefined ? prfArray[i] : 0);
+//                }, 0);
+//                const count = allPrfData.reduce((acc, prfArray) => acc + (prfArray[i] !== undefined ? 1 : 0), 0);
+//                return count > 0 ? sum / count : 0;
+//            });
+//
+//            // Create the dataset using the averaged data
+//            datasets.push({
+//                label: 'Average PRF',
+//                data: xNew.map(i => ({
+//                    x: new Date(i),  // x value is the index
+//                    y: avgPrf[i]     // The averaged y value
+//                })),
+//                borderColor: '#f00',
+//                backgroundColor: '#00000020',
+//                borderWidth: 2,
+//                pointRadius: 0.7,
+//                fill: false
+//            });
+
+
+
             // Find the maximum value in avgPrfLine
             const maxAvgPrf = Math.max(...avgPrfLine);
             const maxAvgPrfIndex = avgPrfLine.indexOf(maxAvgPrf);

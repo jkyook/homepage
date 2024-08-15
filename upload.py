@@ -69,7 +69,7 @@ def main():
 
     service = build('drive', 'v3', credentials=creds)
 
-    folder_path = 'C:/Users/jkyook/PycharmProjects/BFut'
+    folder_path = 'C:/Users/jkyook/PycharmProjects/MG_Hanto/'
 
     total_files = len(os.listdir(folder_path))
     for index, filename in enumerate(os.listdir(folder_path), 1):
@@ -79,7 +79,7 @@ def main():
         # print(f"\n[{index}/{total_files}] Uploading: {filename}")
         print(f"File size: {format_size(file_size)}")
 
-        directory = 'C:/Users/jkyook/PycharmProjects/BFut/'  # 파일이 저장된 디렉토리 경로
+        directory = 'C:/Users/jkyook/PycharmProjects/MG_Hanto/'  # 파일이 저장된 디렉토리 경로
         prefix = '(e)df_npp_m_'
         latest_file = find_latest_file(directory, prefix)
         # print(latest_file, directory+filename)
@@ -112,7 +112,7 @@ def main():
         folder_id = '0ANBkpyLyg1WAUk9PVA'
     
     # 구글 드라이브에서 불필요한 파일 삭제 및 최신 파일 가져오기
-    latest_file = delete_older_files_from_drive(service, folder_id, prefix, date)
+    delete_older_files_from_drive(service, folder_id, prefix, date)
 
 if __name__ == '__main__':
     main()

@@ -241,7 +241,7 @@ def live_data():
     now = datetime.now().time()
 
     # 오전 8시에서 오후 4시 사이
-    if now >= datetime.strptime('08:00:00', '%H:%M:%S').time() and now <= datetime.strptime('16:00:00', '%H:%M:%S').time():
+    if 8 <= now_hour < 16:
         query = "name = '(e)df_npp.csv'"
     else:
         query = "name = '(e4)df_npp.csv'"

@@ -237,11 +237,11 @@ def live_data():
     # # files = service.files().list(q="name contains '(e)df_npp.csv'", spaces='drive', fields='files(id, name)').execute()
     # files = service.files().list(q="name = '(e)df_npp.csv'", spaces='drive', fields='files(id, name)').execute()
 
-    # 현재 시각 가져오기
-    now = datetime.now().time()
+    # 현재 시각을 UTC 기준으로 가져오기
+    now = datetime.utcnow().time()
 
     # 오전 8시에서 오후 4시 사이
-    if now >= datetime.strptime('08:00:00', '%H:%M:%S').time() and now <= datetime.strptime('16:00:00', '%H:%M:%S').time():
+    if now >= datetime.strptime('23:00:00', '%H:%M:%S').time() and now <= datetime.strptime('10:00:00', '%H:%M:%S').time():
         query = "name = '(e)df_npp.csv'"
     else:
         query = "name = '(e4)df_npp.csv'"

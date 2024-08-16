@@ -522,8 +522,8 @@ function startLiveUpdate() {
                     label: 'prf',
                     yAxisID: 'y2',
                     borderColor: 'red',
-                    borderWidth: 1,
-                    pointRadius: 0.2,
+                    borderWidth: 2,
+                    pointRadius: 0.5,
                     fill: false
                 }
             ]

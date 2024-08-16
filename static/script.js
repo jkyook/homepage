@@ -501,25 +501,29 @@ function startLiveUpdate() {
                 {
                     label: 'np1',
                     yAxisID: 'y2',
-                    borderColor: 'red',
+//                    borderColor: 'red',
+                    borderColor: '#28a745',  // 밝은 녹색으로 변경
+                    backgroundColor: 'rgba(40, 167, 69, 0.2)',  // 밝은 녹색의 반투명 배경
                     borderWidth: 1,
                     pointRadius: 0.2,
-                    fill: false
+                    fill: true
                 },
                 {
                     label: 'np2',
                     yAxisID: 'y2',
-                    borderColor: 'green',
+//                    borderColor: 'green',
+                    borderColor: '#b73d3d',  // 어두운 붉은색
+                    backgroundColor: 'rgba(183, 61, 61, 0.2)',  // 어두운 붉은색의 반투명 배경
                     borderWidth: 1,
                     pointRadius: 0.2,
-                    fill: false
+                    fill: true
                 },
                 {
                     label: 'prf',
                     yAxisID: 'y2',
-                    borderColor: 'purple',
-                    borderWidth: 1,
-                    pointRadius: 0.2,
+                    borderColor: 'red',
+                    borderWidth: 2,
+                    pointRadius: 0.5,
                     fill: false
                 }
             ]
@@ -595,4 +599,3 @@ function startLiveUpdate() {
 
 // 페이지 로드 시 실시간 업데이트 시작
 document.addEventListener('DOMContentLoaded', startLiveUpdate);
-

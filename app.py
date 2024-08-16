@@ -233,9 +233,21 @@ def index():
 def live_data():
     service = get_drive_service()
 
-    # # 구글 드라이브에서 "(e)df_npp_m" 파일 찾기
-    # files = service.files().list(q="name contains '(e)df_npp.csv'", spaces='drive', fields='files(id, name)').execute()
-    files = service.files().list(q="name = '(e)df_npp.csv'", spaces='drive', fields='files(id, name)').execute()
+    # # # 구글 드라이브에서 "(e)df_npp_m" 파일 찾기
+    # # files = service.files().list(q="name contains '(e)df_npp.csv'", spaces='drive', fields='files(id, name)').execute()
+    # files = service.files().list(q="name = '(e)df_npp.csv'", spaces='drive', fields='files(id, name)').execute()
+
+    # 현재 시각 가져오기
+    now = datetime.now().time()
+
+    # 오전 8시에서 오후 4시 사이
+    if now >= datetime.strptime('08:00:00', '%H:%M:%S').time() and now <= datetime.strptime('16:00:00', '%H:%M:%S').time():
+        query = "name = '(e)df_npp.csv'"
+    else:
+        query = "name = '(e4)df_npp.csv'"
+
+    # 구글 드라이브에서 파일 검색
+    files = service.files().list(q=query, spaces='drive', fields='files(id, name)').execute()
 
     if not files['files']:
         return jsonify({'error': 'File not found'})

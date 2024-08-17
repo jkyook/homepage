@@ -241,12 +241,11 @@ def live_data():
     now = datetime.utcnow().time()
 
     # 오전 8시에서 오후 4시 사이
-    if now >= datetime.strptime('23:00:00', '%H:%M:%S').time() and now <= datetime.strptime('10:00:00', '%H:%M:%S').time():
+    if now <= datetime.strptime('10:00:00', '%H:%M:%S').time() and now >= datetime.strptime('00:00:00', '%H:%M:%S').time():
         query = "name = '(e)df_npp.csv'"
     else:
         query = "name = '(e4)df_npp.csv'"
 
-    # 구글 드라이브에서 파일 검색
     files = service.files().list(q=query, spaces='drive', fields='files(id, name)').execute()
 
     if not files['files']:

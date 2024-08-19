@@ -1,0 +1,90 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    position: relative;
+}
+
+h1 {
+    text-align: center;
+    margin: 20px 0;
+}
+
+.filters {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.filters select, .filters button {
+    margin: 10px 0;
+}
+
+.filters select {
+    padding: 5px;
+    font-size: 16px;
+}
+
+.filters button {
+    background-color: #007bff;
+    border: none;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.filters button:hover {
+    background-color: #0056b3;
+}
+
+canvas {
+    display: block;
+    margin: 0 auto;
+    max-width: 100%;
+    height: auto;
+}
+
+.strategy-select, .date-filter {
+    position: absolute;
+    top: 10px;
+    display: flex;
+    gap: 10px;
+}
+
+.strategy-select {
+    left: 10px;
+}
+
+.date-filter {
+    right: 10px;
+}
+
+.loading-message, .chart-loading-message {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: 10px;
+    background-color: rgba(0, 0, 0, 0.5);
+    color: white;
+    border-radius: 8px;
+    font-size: 14px;
+    text-align: center;
+}
+
+.chart-loading-message {
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+#resultDisplay {
+    text-align: center;
+    margin: 20px 0;
+    font-size: 1.2em;
+    color: #333;
+    text-decoration: underline;
+    text-decoration-color: red;
+}

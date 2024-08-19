@@ -12,6 +12,7 @@ from googleapiclient.http import MediaFileUpload
 # SCOPES = ['https://www.googleapis.com/auth/drive']
 SCOPES = ['https://www.googleapis.com/auth/drive.file', 'https://www.googleapis.com/auth/drive.appdata', 'https://www.googleapis.com/auth/drive']
 
+which_market = 3
 
 def get_file_size(file_path):
     return os.path.getsize(file_path)

@@ -249,7 +249,7 @@ def live_data():
     df = pd.read_csv(io.BytesIO(file_content))
 
     # 필요한 열만 선택
-    data = df[['time', 'now_prc', 'np1', 'np2', 'prf']].to_dict(orient='records')
+    data = df[['time', 'now_prc', 'np1', 'np2', 'prf', 'real_sum']].to_dict(orient='records')
 
     return jsonify(data)
 

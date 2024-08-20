@@ -329,6 +329,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const np1Values = data.map(row => row['np1']);
             const np2Values = data.map(row => row['np2']);
             const prfValues = data.map(row => row['prf']);
+            const realSumValues = data.map(row => row['real']);
 
             const ctx = document.getElementById('myChart').getContext('2d');
 
@@ -379,6 +380,16 @@ document.addEventListener('DOMContentLoaded', function() {
                             backgroundColor: 'rgba(255, 0, 0, 0.2)',  // 빨간색의 반투명 배경
                             borderWidth: 3,
                             pointRadius: 0.7,
+                            fill: false,
+                            yAxisID: 'y2'
+                        },
+                        {
+                            label: 'real_sum', // Add this dataset
+                            data: realSumValues,
+                            borderColor: '#ff9f00', // Choose a color for this line
+                            backgroundColor: 'rgba(255, 159, 0, 0.2)', // Choose a background color
+                            borderWidth: 2,
+                            pointRadius: 0.5,
                             fill: false,
                             yAxisID: 'y2'
                         }
@@ -525,6 +536,14 @@ function startLiveUpdate() {
                     borderWidth: 2,
                     pointRadius: 0.5,
                     fill: false
+                },
+                {
+                    label: 'real',
+                    yAxisID: 'y2',
+                    borderColor: 'black',
+                    borderWidth: 2,
+                    pointRadius: 0.5,
+                    fill: false
                 }
             ]
         },
@@ -573,7 +592,8 @@ function startLiveUpdate() {
                     now_prc: d.now_prc,
                     np1: d.np1,
                     np2: d.np2,
-                    prf: d.prf
+                    prf: d.prf,
+                    real_sum: d.real_sum
                 }));
 
                 // Console 로그로 변환된 데이터 확인
@@ -584,6 +604,8 @@ function startLiveUpdate() {
                 liveChart.data.datasets[1].data = formattedData.map(d => ({ x: d.time, y: d.np1 }));
                 liveChart.data.datasets[2].data = formattedData.map(d => ({ x: d.time, y: d.np2 }));
                 liveChart.data.datasets[3].data = formattedData.map(d => ({ x: d.time, y: d.prf }));
+                liveChart.data.datasets[4].data = formattedData.map(d => ({ x: d.time, y: d.real_sum }));
+
                 liveChart.update();
             })
             .catch(error => console.error('Error:', error));

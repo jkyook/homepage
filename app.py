@@ -5,7 +5,8 @@ import pickle
 from googleapiclient.discovery import build
 from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import InstalledAppFlow
-from google.oauth2.credentials import Credentials  # 이 줄을 추가
+from google.oauth2.credentials import Credentials
+from google.auth.exceptions import RefreshError  # 이 줄을 추가
 import pandas as pd
 import io
 import re
@@ -32,7 +33,6 @@ cache = {
 
 CACHE_EXPIRY = 300  # 캐시 만료 시간 (초), 예: 5분
 
-
 def get_drive_service():
     creds = None
     # 기존 자격 증명 파일(token.json)이 있는지 확인
@@ -44,7 +44,7 @@ def get_drive_service():
         if creds and creds.expired and creds.refresh_token:
             try:
                 creds.refresh(Request())
-            except google.auth.exceptions.RefreshError:
+            except RefreshError:  # google.auth.exceptions.RefreshError 대신 이 라인으로 수정
                 # 토큰 갱신 실패 시, 토큰 파일 삭제하여 재인증 유도
                 os.remove('token.json')
                 creds = None

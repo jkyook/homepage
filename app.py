@@ -234,7 +234,7 @@ def live_data():
     service = get_drive_service()
 
     # 업로드 파일의 접두사 설정
-    now = datetime.datetime.utcnow()
+    now = datetime.utcnow()
     if 13 <= now.hour <= 19:  # 오후 10시 ~ 새벽 4시
         prefix_ = '(e4)df_npp.csv'
         files = service.files().list(q="name = '(e4)df_npp.csv'", spaces='drive', fields='files(id, name)').execute()

@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const plotAvgButton = document.getElementById('plotAvg');
 
     function fetchFiles(startDate = '', endDate = '', strategy = '') {
-        loadingMessage.style.display = 'block'; // Show loading message
+        loadingMessage.style.display = 'block'; // Show loading message //
 
         // Construct the query string with optional parameters
         const queryString = new URLSearchParams({

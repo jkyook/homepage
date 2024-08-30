@@ -8,7 +8,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from googleapiclient.http import MediaFileUpload
 
-## SCOPES를 수정했습니다. 더 넓은 범위의 권한을 요청합니다.
+# SCOPES를 수정했습니다. 더 넓은 범위의 권한을 요청합니다.
 # SCOPES = ['https://www.googleapis.com/auth/drive']
 SCOPES = ['https://www.googleapis.com/auth/drive.file', 'https://www.googleapis.com/auth/drive.appdata', 'https://www.googleapis.com/auth/drive']
 

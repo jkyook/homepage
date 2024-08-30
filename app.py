@@ -5,7 +5,8 @@ import pickle
 from googleapiclient.discovery import build
 from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import InstalledAppFlow
-from google.oauth2.credentials import Credentials  # 이 줄을 추가
+from google.oauth2.credentials import Credentials
+from google.auth.exceptions import RefreshError  # 이 줄을 추가
 import pandas as pd
 import io
 import re
@@ -24,14 +25,13 @@ SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
 # 개발 환경 변수 (0: 자동 로그인, 1: 로그인 필요)
 LOGIN_OX = int(os.environ.get('LOGIN_OX', 0))  # 기본값은 1
 
-# 캐시 변수
+## 캐시 변수
 cache = {
     'files': None,
     'timestamp': None
 }
 
 CACHE_EXPIRY = 300  # 캐시 만료 시간 (초), 예: 5분
-
 
 def get_drive_service():
     creds = None
@@ -44,7 +44,7 @@ def get_drive_service():
         if creds and creds.expired and creds.refresh_token:
             try:
                 creds.refresh(Request())
-            except google.auth.exceptions.RefreshError:
+            except RefreshError:  # google.auth.exceptions.RefreshError 대신 이 라인으로 수정
                 # 토큰 갱신 실패 시, 토큰 파일 삭제하여 재인증 유도
                 os.remove('token.json')
                 creds = None
@@ -233,9 +233,19 @@ def index():
 def live_data():
     service = get_drive_service()
 
+    # 업로드 파일의 접두사 설정
+    now = datetime.utcnow()
+    if 13 <= now.hour <= 19:  # 오후 10시 ~ 새벽 4시
+        prefix_ = '(e4)df_npp.csv'
+        files = service.files().list(q="name = '(e4)df_npp.csv'", spaces='drive', fields='files(id, name)').execute()
+    else:
+        prefix_ = '(e)df_npp.csv'
+        files = service.files().list(q="name = '(e)df_npp.csv'", spaces='drive', fields='files(id, name)').execute()
+
     # # 구글 드라이브에서 "(e)df_npp_m" 파일 찾기
     # files = service.files().list(q="name contains '(e)df_npp.csv'", spaces='drive', fields='files(id, name)').execute()
-    files = service.files().list(q="name = '(e)df_npp.csv'", spaces='drive', fields='files(id, name)').execute()
+    # files = service.files().list(q="name = '(e)df_npp.csv'", spaces='drive', fields='files(id, name)').execute()
+
 
     if not files['files']:
         return jsonify({'error': 'File not found'})
@@ -249,7 +259,7 @@ def live_data():
     df = pd.read_csv(io.BytesIO(file_content))
 
     # 필요한 열만 선택
-    data = df[['time', 'now_prc', 'np1', 'np2', 'prf']].to_dict(orient='records')
+    data = df[['time', 'now_prc', 'np1', 'np2', 'prf', 'real_sum']].to_dict(orient='records')
 
     return jsonify(data)
 

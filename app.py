@@ -25,7 +25,7 @@ SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
 # 개발 환경 변수 (0: 자동 로그인, 1: 로그인 필요)
 LOGIN_OX = int(os.environ.get('LOGIN_OX', 0))  # 기본값은 1
 
-# 캐시 변수
+## 캐시 변수
 cache = {
     'files': None,
     'timestamp': None

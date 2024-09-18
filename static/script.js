@@ -1,4 +1,4 @@
-//import Chart from 'https://cdn.jsdelivr.net/npm/chart.js@3.8.0/dist/chart.esm.min.js';
+let chartData; // 파일의 최상단에 이 줄 추가
 
 document.addEventListener('DOMContentLoaded', function() {
     const loadingMessage = document.getElementById('loadingMessage');
@@ -293,6 +293,7 @@ document.addEventListener('DOMContentLoaded', function() {
         fetchFiles(startDate, endDate, strategy);
     });
 
+
     document.getElementById('fileForm').addEventListener('submit', function(event) {
         event.preventDefault();
         const fileId = fileDropdown.value;
@@ -486,12 +487,13 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-
+//########################################
 
 let liveChart;
+let updateInProgress = false; // 실시간 업데이트 중복 방지
 
 function startLiveUpdate() {
-    // 기존 차트가 있다면 제거
+    // 기존 차트가 있으면 제거
     if (liveChart) {
         liveChart.destroy();
     }
@@ -512,9 +514,8 @@ function startLiveUpdate() {
                 {
                     label: 'np1',
                     yAxisID: 'y2',
-//                    borderColor: 'red',
-                    borderColor: '#28a745',  // 밝은 녹색으로 변경
-                    backgroundColor: 'rgba(40, 167, 69, 0.2)',  // 밝은 녹색의 반투명 배경
+                    borderColor: '#28a745',
+                    backgroundColor: 'rgba(40, 167, 69, 0.2)',
                     borderWidth: 1,
                     pointRadius: 0.2,
                     fill: true
@@ -522,9 +523,8 @@ function startLiveUpdate() {
                 {
                     label: 'np2',
                     yAxisID: 'y2',
-//                    borderColor: 'green',
-                    borderColor: '#b73d3d',  // 어두운 붉은색
-                    backgroundColor: 'rgba(183, 61, 61, 0.2)',  // 어두운 붉은색의 반투명 배경
+                    borderColor: '#b73d3d',
+                    backgroundColor: 'rgba(183, 61, 61, 0.2)',
                     borderWidth: 1,
                     pointRadius: 0.2,
                     fill: true
@@ -548,22 +548,81 @@ function startLiveUpdate() {
             ]
         },
         options: {
+            responsive: true,
             scales: {
                 x: {
                     type: 'time',
                     time: {
                         unit: 'minute'
+                    },
+                    title: {
+                        display: true,
+                        text: 'Time'
                     }
                 },
                 y1: {
                     type: 'linear',
-                    display: true,
                     position: 'left',
+                    title: {
+                        display: true,
+                        text: 'now_prc'
+                    },
+                    ticks: {
+                        beginAtZero: true,
+                        color: 'blue'
+                    },
+                    grid: {
+                        drawBorder: false,
+                        borderDash: [2, 2],
+                        color: 'rgba(0, 0, 0, 0.1)'
+                    },
+                    // 데이터를 기반으로 자동으로 범위 설정
+                    suggestedMin: 0, // 임시로 최소값 0으로 설정 (이후 업데이트 함수에서 계산)
+                    suggestedMax: 0  // 임시로 최대값 0으로 설정 (이후 업데이트 함수에서 계산)
+
                 },
                 y2: {
                     type: 'linear',
-                    display: true,
                     position: 'right',
+                    title: {
+                        display: true,
+                        text: 'np1, np2, prf, real',
+                        color: '#e74a3b'
+                    },
+                    ticks: {
+                        beginAtZero: true,
+                        color: '#e74a3b'
+                    },
+                    grid: {
+                        drawOnChartArea: false
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: {
+                        color: '#858796',
+                        font: {
+                            size: 12
+                        }
+                    }
+                },
+                tooltip: {
+                    backgroundColor: '#f8f9fc',
+                    bodyColor: '#858796',
+                    borderColor: '#e3e6f0',
+                    borderWidth: 1,
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label + ': ' + context.formattedValue;
+                            return label;
+                        }
+                    }
+                },
+                annotation: {
+                    annotations: [] // 어노테이션은 추후 업데이트 시 추가됨
                 }
             }
         }
@@ -571,52 +630,173 @@ function startLiveUpdate() {
 
     const formatTime = (hhmmss) => {
         const timeStr = hhmmss.toString().padStart(6, '0');
-        const hours = timeStr.substring(0, 2);
-        const minutes = timeStr.substring(2, 4);
-        const seconds = timeStr.substring(4, 6);
+        const hours = parseInt(timeStr.substring(0, 2), 10);
+        const minutes = parseInt(timeStr.substring(2, 4), 10);
+        const seconds = parseInt(timeStr.substring(4, 6), 10);
 
-        const now = new Date(); // 현재 날짜와 시간을 가져옴
-        now.setHours(hours, minutes, seconds, 0); // 현재 날짜에 입력된 HH:MM:SS 적용
+        const now = new Date();
+        now.setHours(hours, minutes, seconds, 0);
 
-        return now.toISOString(); // ISO 형식으로 변환하여 반환
+        return now.toISOString();
     };
 
-    function updateChart() {
-        fetch('/live_data')
-            .then(response => response.json())
-            .then(data => {
-                console.log('Fetched data:', data); // 데이터를 콘솔에 출력
+    // np1의 마지막 값을 저장하기 위한 변수
+    let lastNp1Value = null;
 
-                const formattedData = data.map(d => ({
-                    time: formatTime(d.time), // time 데이터를 ISO 8601 형식으로 변환
-                    now_prc: d.now_prc,
-                    np1: d.np1,
-                    np2: d.np2,
-                    prf: d.prf,
-                    real_sum: d.real_sum
-                }));
+    // np2의 마지막 값을 저장하기 위한 변수
+    let lastNp2Value = null;
 
-                // Console 로그로 변환된 데이터 확인
-                console.log('Formatted data:', formattedData);
+    // 실시간 차트 업데이트 함수
+    async function updateChart() {
+        if (updateInProgress) return; // 업데이트 중복 방지
+        updateInProgress = true;
 
-                liveChart.data.labels = formattedData.map(d => d.time);
-                liveChart.data.datasets[0].data = formattedData.map(d => ({ x: d.time, y: d.now_prc }));
-                liveChart.data.datasets[1].data = formattedData.map(d => ({ x: d.time, y: d.np1 }));
-                liveChart.data.datasets[2].data = formattedData.map(d => ({ x: d.time, y: d.np2 }));
-                liveChart.data.datasets[3].data = formattedData.map(d => ({ x: d.time, y: d.prf }));
-                liveChart.data.datasets[4].data = formattedData.map(d => ({ x: d.time, y: d.real_sum }));
+        try {
+            const response = await fetch('/live_data');
+            if (!response.ok) {
+                throw new Error(`실시간 데이터 가져오기 실패: ${response.statusText}`);
+            }
+            const data = await response.json();
+            console.log('Fetched data:', data);
 
-                liveChart.update();
-            })
-            .catch(error => console.error('Error:', error));
+            const formattedData = data.map(d => ({
+                time: formatTime(d.time),
+                now_prc: d.now_prc,
+                np1: d.np1,
+                np2: d.np2,
+                prf: d.prf,
+                real_sum: d.real_sum,
+                type1: d.type1,
+                type2: d.type2
+            }));
+
+            // now_prc의 최소값과 최대값을 계산하여 y1 축에 반영
+            const nowPrcMin = Math.min(...formattedData.map(d => d.now_prc));
+            const nowPrcMax = Math.max(...formattedData.map(d => d.now_prc));
+
+            // prf 절대값의 최대값 계산
+            const maxAbsPrf = Math.max(...formattedData.map(d => Math.abs(d.prf)));
+
+            // 차트 데이터 업데이트
+            liveChart.data.labels = formattedData.map(d => d.time);
+            liveChart.data.datasets[0].data = formattedData.map(d => ({ x: d.time, y: d.now_prc }));
+            liveChart.data.datasets[1].data = formattedData.map(d => ({ x: d.time, y: d.np1 }));
+            liveChart.data.datasets[2].data = formattedData.map(d => ({ x: d.time, y: d.np2 }));
+            liveChart.data.datasets[3].data = formattedData.map(d => ({
+                x: d.time,
+                y: d.prf / maxAbsPrf
+            }));
+            liveChart.data.datasets[4].data = formattedData.map(d => ({ x: d.time, y: d.real_sum }));
+
+            // np1 값이 변하는 지점 찾기
+            const np1ChangePoints = [];
+            for (let i = 1; i < formattedData.length; i++) {
+                if (formattedData[i].np1 !== formattedData[i - 1].np1) {
+                    np1ChangePoints.push({
+                        index: i,
+                        time: formattedData[i].time,
+                        np1: formattedData[i].np1,
+                        type1: formattedData[i].type1
+                    });
+                }
+            }
+
+            // np2 값이 변하는 지점 찾기
+            const np2ChangePoints = [];
+            for (let i = 1; i < formattedData.length; i++) {
+                if (formattedData[i].np2 !== formattedData[i - 1].np2) {
+                    np2ChangePoints.push({
+                        index: i,
+                        time: formattedData[i].time,
+                        np2: formattedData[i].np2,
+                        type2: formattedData[i].type2
+                    });
+                }
+            }
+
+
+            // 데이터 범위의 중간 값을 계산하여 어노테이션을 그래프 중간에 위치시킴
+            const y1Min = Math.min(...formattedData.map(d => d.now_prc));
+            const y1Max = Math.max(...formattedData.map(d => d.now_prc));
+            const middleYValue = (y1Min + y1Max) / 2;  // now_prc의 중간 값 계산
+
+            // np1 어노테이션 생성
+            const np1Annotations = np1ChangePoints.map((point, index) => {
+                const yAdjustOptions = [-85-100, -50-100, 15-100, -15-100, 50-100, 85-100];
+                const yAdjust = yAdjustOptions[index % 6];
+
+                return {
+                    id: `np1-annotation-${index}`,  // 고유 ID 추가
+                    type: 'label',
+                    xValue: point.time,
+                    yValue: middleYValue,
+                    backgroundColor: 'rgba(40, 167, 69, 0.7)',  // np1 색상에 맞춤
+                    content: point.type1,
+                    font: {
+                        size: 12,
+                        weight: 'bold'
+                    },
+                    color: 'white',
+                    padding: 4,
+                    xAdjust: 0, // x축 조정 없음
+                    yAdjust: yAdjust,
+                    clip: true, // 어노테이션이 차트 영역을 벗어나지 않도록 설정
+                    drawTime: 'afterDatasetsDraw' // 데이터 그려진 후 어노테이션 표시
+                };
+            });
+
+
+            // np2 어노테이션 생성
+            const np2Annotations = np2ChangePoints.map((point, index) => {
+                const yAdjustOptions = [-85+100,-50+100, 15+100, -15+100, 50+100, 85+100];
+                const yAdjust = yAdjustOptions[index % 6];
+
+                return {
+                    id: `np2-annotation-${index}`,  // 고유 ID 추가
+                    type: 'label',
+                    xValue: point.time,
+                    yValue: middleYValue,
+                    backgroundColor: 'rgba(183, 61, 61, 0.7)',  // np2 색상에 맞춤
+                    content: point.type2,
+                    font: {
+                        size: 12,
+                        weight: 'bold'
+                    },
+                    color: 'white',
+                    padding: 4,
+                    xAdjust: 0, // x축 조정 없음
+                    yAdjust: yAdjust,
+                    clip: true, // 어노테이션이 차트 영역을 벗어나지 않도록 설정
+                    drawTime: 'afterDatasetsDraw' // 데이터 그려진 후 어노테이션 표시
+                };
+            });
+
+
+            // 어노테이션을 기존 어노테이션과 함께 배열로 업데이트
+            if (np1ChangePoints.length === 0 && np2ChangePoints.length === 0) {
+                liveChart.options.plugins.annotation.annotations = [];
+            } else {
+                liveChart.options.plugins.annotation.annotations = [
+                    ...np1Annotations,
+                    ...np2Annotations
+                ];
+            }
+
+            // y1 축의 최소/최대 값을 업데이트
+            liveChart.options.scales.y1.suggestedMin = nowPrcMin;
+            liveChart.options.scales.y1.suggestedMax = nowPrcMax;
+
+            liveChart.update();
+
+        } catch (error) {
+            console.error('실시간 데이터 업데이트 오류:', error);
+        } finally {
+            updateInProgress = false;
+        }
     }
 
-
-    // 초기 업데이트
-    updateChart();
-
-    // 1분마다 업데이트
-    setInterval(updateChart, 30000);
+    updateChart(); // 초기 업데이트
+    setInterval(updateChart, 30000); // 30초마다 업데이트
 }
 
 // 페이지 로드 시 실시간 업데이트 시작

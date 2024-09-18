@@ -190,7 +190,6 @@ def logout():
     session.pop('username', None)
     return redirect(url_for('login'))
 
-
 @app.route('/data', methods=['POST'])
 def data():
     if 'username' not in session and LOGIN_OX == 1:
@@ -212,9 +211,19 @@ def data():
 
         df = df.dropna(subset=['time'])
         df['time'] = df['time'].dt.strftime('%H:%M:%S')
-        df = df[['time', 'now_prc', 'np1', 'np2', 'prf']]
 
+        # 'type1'과 'type2' 열이 없을 경우 기본값으로 추가
+        for col in ['type1', 'type2']:
+            if col not in df.columns:
+                df[col] = 'N/A'  # 또는 적절한 기본값 설정
+
+        # 그래프에 사용할 데이터를 선택
+        df = df[['time', 'now_prc', 'np1', 'np2', 'prf', 'type1', 'type2']]
+
+        # 데이터 JSON 형식으로 변환
+        print("Data being sent:", df[['time', 'now_prc', 'np1', 'np2', 'prf', 'type1', 'type2']].head())
         data = df.rename(columns={'now_prc': 'price'}).to_dict(orient='records')
+        print("Sending data:", data[:5])  # 처음 5개의 레코드만 출력
         return jsonify(data)
 
     except Exception as e:
@@ -235,12 +244,7 @@ def live_data():
 
     # 업로드 파일의 접두사 설정
     now = datetime.utcnow()
-    if 13 <= now.hour <= 19:  # 오후 10시 ~ 새벽 4시
-        prefix_ = '(e4)df_npp.csv'
-        files = service.files().list(q="name = '(e4)df_npp.csv'", spaces='drive', fields='files(id, name)').execute()
-    else:
-        prefix_ = '(e)df_npp.csv'
-        files = service.files().list(q="name = '(e)df_npp.csv'", spaces='drive', fields='files(id, name)').execute()
+    files = service.files().list(q="name = '(e)df_npp_m.csv'", spaces='drive', fields='files(id, name)').execute()
 
     # # 구글 드라이브에서 "(e)df_npp_m" 파일 찾기
     # files = service.files().list(q="name contains '(e)df_npp.csv'", spaces='drive', fields='files(id, name)').execute()
@@ -259,7 +263,7 @@ def live_data():
     df = pd.read_csv(io.BytesIO(file_content))
 
     # 필요한 열만 선택
-    data = df[['time', 'now_prc', 'np1', 'np2', 'prf', 'real_sum']].to_dict(orient='records')
+    data = df[['time', 'now_prc', 'np1', 'np2', 'prf', 'real_sum', 'type1', 'type2']].to_dict(orient='records')
 
     return jsonify(data)
 

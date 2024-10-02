@@ -242,14 +242,22 @@ def index():
 def live_data():
     service = get_drive_service()
 
-    # 업로드 파일의 접두사 설정
-    now = datetime.utcnow()
-    files = service.files().list(q="name = '(e)df_npp_m.csv'", spaces='drive', fields='files(id, name)').execute()
+    # # 업로드 파일의 접두사 설정
+    # now = datetime.utcnow()
+    # files = service.files().list(q="name = '(e)df_npp_m.csv'", spaces='drive', fields='files(id, name)').execute()
 
     # # 구글 드라이브에서 "(e)df_npp_m" 파일 찾기
     # files = service.files().list(q="name contains '(e)df_npp.csv'", spaces='drive', fields='files(id, name)').execute()
     # files = service.files().list(q="name = '(e)df_npp.csv'", spaces='drive', fields='files(id, name)').execute()
 
+    # 업로드 파일의 접두사 설정
+    now = datetime.utcnow()
+    if 13 <= now.hour <= 19:  # 오후 10시 ~ 새벽 4시
+        prefix_ = '(e4)df_npp.csv'
+        files = service.files().list(q="name = '(e4)df_npp.csv'", spaces='drive', fields='files(id, name)').execute()
+    else:
+        prefix_ = '(e)df_npp.csv'
+        files = service.files().list(q="name = '(e)df_npp.csv'", spaces='drive', fields='files(id, name)').execute()
 
     if not files['files']:
         return jsonify({'error': 'File not found'})
@@ -261,9 +269,13 @@ def live_data():
 
     # CSV 파일 파싱
     df = pd.read_csv(io.BytesIO(file_content))
+    #
+    # # 필요한 열만 선택
+    # data = df[['time', 'now_prc', 'np1', 'np2', 'prf', 'real_sum', 'type1', 'type2']].to_dict(orient='records')
 
-    # 필요한 열만 선택
-    data = df[['time', 'now_prc', 'np1', 'np2', 'prf', 'real_sum', 'type1', 'type2']].to_dict(orient='records')
+    columns_needed = ['time', 'now_prc', 'np1', 'np2', 'prf', 'real_sum', 'type1', 'type2']
+    columns_available = [col for col in columns_needed if col in df.columns]
+    data = df[columns_available].to_dict(orient='records')
 
     return jsonify(data)
 

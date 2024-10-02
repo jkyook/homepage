@@ -4,11 +4,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>51 Strategy</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<!--    <script type="module" src="script.js"></script>-->
-    <script type="module" src="{{ url_for('static', filename='script.js') }}"></script>
+<!--    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>-->
+<!--&lt;!&ndash;    <script type="module" src="script.js"></script>&ndash;&gt;-->
+<!--    <script type="module" src="{{ url_for('static', filename='script.js') }}"></script>-->
+<!--    <script src="https://cdn.jsdelivr.net/npm/date-fns@2"></script>-->
+<!--    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>-->
+
+        <!-- Chart.js 라이브러리 -->
+<!--    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.8.0/dist/chart.min.js"></script>-->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.0.1"></script>
+
+    <!-- Chart.js 어노테이션 플러그인 -->
+<!--    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.1.0/dist/chartjs-plugin-annotation.min.js"></script>-->
+<!--    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.1.0"></script>-->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1"></script>
+
+<!--    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.1.0/dist/chartjs-plugin-annotation.min.js"></script>-->
+
+    <!-- date-fns 및 어댑터 -->
     <script src="https://cdn.jsdelivr.net/npm/date-fns@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <!-- 사용자 정의 스크립트 -->
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
 
 
     <!-- Chart.js -->

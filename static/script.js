@@ -1,5 +1,8 @@
 let chartData; // 파일의 최상단에 이 줄 추가
 
+let startIndex = 0;
+let endIndex = Infinity;
+
 document.addEventListener('DOMContentLoaded', function() {
     const loadingMessage = document.getElementById('loadingMessage');
     const chartLoadingMessage = document.getElementById('chartLoadingMessage');
@@ -10,6 +13,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const loadFilesButton = document.getElementById('loadFiles');
     const resetFilesButton = document.getElementById('resetFiles');
     const plotAvgButton = document.getElementById('plotAvg');
+    const startIndexInput = document.getElementById('startIndex');
+    const endIndexInput = document.getElementById('endIndex');
+    const updateIndexRangeButton = document.getElementById('updateIndexRange');
 
     function fetchFiles(startDate = '', endDate = '', strategy = '') {
         loadingMessage.style.display = 'block'; // Show loading message
@@ -485,6 +491,12 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Error fetching data:', error);
         });
     });
+
+    updateIndexRangeButton.addEventListener('click', function() {
+        startIndex = parseInt(startIndexInput.value) || 0;
+        endIndex = parseInt(endIndexInput.value) || Infinity;
+        updateChart();
+    });
 });
 
 //########################################
@@ -652,7 +664,14 @@ function startLiveUpdate() {
         updateInProgress = true;
 
         try {
-            const response = await fetch('/live_data');
+            const response = await fetch('/live_data', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ startIndex, endIndex }),
+            });
+            
             if (!response.ok) {
                 throw new Error(`실시간 데이터 가져오기 실패: ${response.statusText}`);
             }
